@@ -2,7 +2,6 @@ package groupme
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 )
@@ -35,6 +34,10 @@ func NewClient(token string, httpClient *http.Client) (*Client, error) {
 	return c, nil
 }
 
+func successful(code int) bool {
+	return code < 300 && code >= 200
+}
+
 // Common request function
 func (c *Client) getResponse(req *http.Request) ([]byte, error) {
 	req.Header.Set("User-Agent", "groupme.go/api")
@@ -45,8 +48,7 @@ func (c *Client) getResponse(req *http.Request) ([]byte, error) {
 	defer resp.Body.Close()
 
 	data, err := ioutil.ReadAll(resp.Body)
-	if resp.StatusCode != 200 {
-		fmt.Println(resp.ProtoMajor)
+	if !successful(resp.StatusCode) {
 		if resp.StatusCode == 400 {
 			return nil, errors.New(parseError(&data))
 		} else {
