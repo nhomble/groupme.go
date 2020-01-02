@@ -1,6 +1,8 @@
 package groupme
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -46,6 +48,12 @@ type GroupQuery struct {
 	Omit    []string
 }
 
+type CreateGroupCommand struct {
+	Name     string  `json:"name"`
+	Share    bool    `json:"share"`
+	ImageUrl *string `json:"image_url"`
+}
+
 var DefaultGroupQuery GroupQuery = GroupQuery{
 	Page:    1,
 	PerPage: 10,
@@ -82,17 +90,53 @@ func (api GroupAPI) getInternal(endpoint string, q *GroupQuery) ([]Group, error)
 }
 
 // List groups the authenticated user is part of
-func (api GroupAPI) Get(q *GroupQuery) ([]Group, error) {
+func (api GroupAPI) Find(q *GroupQuery) ([]Group, error) {
 	return api.getInternal("/groups", q)
 }
 
 // List groups the authenticated user was a part of (but can rejoin)
-func (api GroupAPI) GetFormer(q *GroupQuery) ([]Group, error) {
+func (api GroupAPI) FindFormer(q *GroupQuery) ([]Group, error) {
 	return api.getInternal("/groups/former", q)
 }
 
-func (api GroupAPI) GetById(id string) (Group, error) {
-	return Group{}, nil
+// Get group by id
+func (api GroupAPI) Get(id string) (*Group, error) {
+	url := fmt.Sprintf("%s/groups/%s?token=%s", BASE, id, api.client.token)
+	group := Group{}
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	data, err := api.client.getResponse(req)
+	if err != nil {
+		return nil, err
+	}
+	err = unravel(&data, &group)
+	if err != nil {
+		return nil, err
+	}
+	return &group, nil
+}
+
+func (api GroupAPI) Create(cmd *CreateGroupCommand) (*Group, error) {
+	url := fmt.Sprintf("%s/groups?token=%s", BASE, api.client.token)
+	data, err := json.Marshal(cmd)
+	fmt.Println(string(data))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	if err != nil {
+		return nil, err
+	}
+	group := Group{}
+	data, err = api.client.getResponse(req)
+	if err != nil {
+		return nil, err
+	}
+	err = unravel(&data, &group)
+	if err != nil {
+		return nil, err
+	}
+	return &group, nil
+
 }
 
 // Parse the time since epoch time from groupme
