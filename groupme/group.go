@@ -22,10 +22,10 @@ type Member struct {
 }
 
 type GroupMessages struct {
-	Count                int     `json:"count"`
-	LastMessageId        string  `json:"last_message_id"`
-	LastMessageCreatedAt int64   `json:"last_message_created_at"`
-	Preview              Message `json:"preview"`
+	Count                int            `json:"count"`
+	LastMessageId        string         `json:"last_message_id"`
+	LastMessageCreatedAt int64          `json:"last_message_created_at"`
+	Preview              PreviewMessage `json:"preview"`
 }
 
 type Group struct {
@@ -67,7 +67,7 @@ var DefaultGroupQuery GroupQuery = GroupQuery{
 	Omit:    []string{"memberships"},
 }
 
-func (api GroupAPI) getInternal(endpoint string, q *GroupQuery) ([]Group, error) {
+func (api GroupAPI) searchInternal(endpoint string, q *GroupQuery) ([]Group, error) {
 	if q == nil {
 		q = &DefaultGroupQuery
 	}
@@ -96,25 +96,9 @@ func (api GroupAPI) getInternal(endpoint string, q *GroupQuery) ([]Group, error)
 	return groups, nil
 }
 
-// List groups the authenticated user is part of
-func (api GroupAPI) Find(q *GroupQuery) ([]Group, error) {
-	return api.getInternal("/groups", q)
-}
-
-// List groups the authenticated user was a part of (but can rejoin)
-func (api GroupAPI) FindFormer(q *GroupQuery) ([]Group, error) {
-	return api.getInternal("/groups/former", q)
-}
-
-// Get group by id
-func (api GroupAPI) Get(id string) (*Group, error) {
-	url := fmt.Sprintf("%s/groups/%s?token=%s", BASE, id, (*api.client.TokenProvider).Get())
+func forGroup(client *Client, req *http.Request) (*Group, error) {
 	group := Group{}
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-	data, err := api.client.getResponse(req)
+	data, err := client.getResponse(req)
 	if err != nil {
 		return nil, err
 	}
@@ -123,6 +107,26 @@ func (api GroupAPI) Get(id string) (*Group, error) {
 		return nil, err
 	}
 	return &group, nil
+}
+
+// List groups the authenticated user is part of
+func (api GroupAPI) Find(q *GroupQuery) ([]Group, error) {
+	return api.searchInternal("/groups", q)
+}
+
+// List groups the authenticated user was a part of (but can rejoin)
+func (api GroupAPI) FindFormer(q *GroupQuery) ([]Group, error) {
+	return api.searchInternal("/groups/former", q)
+}
+
+// Get group by id
+func (api GroupAPI) Get(id string) (*Group, error) {
+	url := fmt.Sprintf("%s/groups/%s?token=%s", BASE, id, (*api.client.TokenProvider).Get())
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return forGroup(api.client, req)
 }
 
 func (api GroupAPI) Create(cmd *CreateGroupCommand) (*Group, error) {
@@ -135,16 +139,7 @@ func (api GroupAPI) Create(cmd *CreateGroupCommand) (*Group, error) {
 	if err != nil {
 		return nil, err
 	}
-	group := Group{}
-	data, err = api.client.getResponse(req)
-	if err != nil {
-		return nil, err
-	}
-	err = unravel(&data, &group)
-	if err != nil {
-		return nil, err
-	}
-	return &group, nil
+	return forGroup(api.client, req)
 }
 
 // Update a group by id
@@ -158,16 +153,7 @@ func (api GroupAPI) Update(groupId string, cmd *UpdateGroupCommand) (*Group, err
 	if err != nil {
 		return nil, err
 	}
-	group := Group{}
-	data, err = api.client.getResponse(req)
-	if err != nil {
-		return nil, err
-	}
-	err = unravel(&data, &group)
-	if err != nil {
-		return nil, err
-	}
-	return &group, nil
+	return forGroup(api.client, req)
 }
 
 // Delete the group by id
@@ -178,6 +164,34 @@ func (api GroupAPI) Delete(groupId string) error {
 		return err
 	}
 	return api.client.execute(req)
+}
+
+// Join a group for the first time
+func (api GroupAPI) Join(groupId string, shareUrl string) (*Group, error) {
+	url := fmt.Sprintf("%s/groups/%s/join/%s?token=%s", BASE, groupId, shareUrl, (*api.client.TokenProvider).Get())
+	req, err := http.NewRequest(http.MethodPost, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	return forGroup(api.client, req)
+}
+
+// Rejoin a group this user had previously joined
+func (api GroupAPI) ReJoin(groupId string) (*Group, error) {
+	url := fmt.Sprintf("%s/groups/join?token=%s", BASE, (*api.client.TokenProvider).Get())
+	data, err := json.Marshal(struct {
+		Id string `json:"group_id"`
+	}{
+		Id: groupId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	if err != nil {
+		return nil, err
+	}
+	return forGroup(api.client, req)
 }
 
 // Parse the time since epoch time from groupme

@@ -10,16 +10,6 @@ type GroupmeProps map[string]string
 
 var defaultName string = ".groupme.go.properties"
 
-// Get name to configuration file - assumes linux
-// TODO consider other compatibilities with filesystem
-func DefaultName() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
-	}
-	return home + "/" + defaultName
-}
-
 // View properties in map
 func View(propLocation string) (*GroupmeProps, error) {
 	f, err := os.Open(propLocation)

@@ -14,6 +14,7 @@ type Client struct {
 	TokenProvider *TokenProvider
 	Users         *UserAPI
 	Groups        *GroupAPI
+	Messages      *MessageAPI
 }
 
 // Returns a new instance to a groupme client
@@ -29,6 +30,7 @@ func NewClient(provider TokenProvider, httpClient *http.Client) (*Client, error)
 	// apis
 	c.Users = &UserAPI{client: c}
 	c.Groups = &GroupAPI{client: c}
+	c.Messages = &MessageAPI{client: c}
 
 	return c, nil
 }
@@ -40,6 +42,7 @@ func successful(code int) bool {
 // Common request function
 func (c *Client) getResponse(req *http.Request) ([]byte, error) {
 	req.Header.Set("User-Agent", AGENT)
+	req.Header.Set("Content-Type", "application/json")
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -51,7 +54,7 @@ func (c *Client) getResponse(req *http.Request) ([]byte, error) {
 		if resp.StatusCode == 400 {
 			return nil, errors.New(parseError(&data))
 		} else {
-			return nil, errors.New("Failed to make http request status=" + resp.Status)
+			return nil, errors.New("Failed to make " + req.Method + " request to url=" + req.URL.String() + " status=" + resp.Status)
 		}
 	}
 	if err != nil {
@@ -64,6 +67,7 @@ func (c *Client) getResponse(req *http.Request) ([]byte, error) {
 // Execute request with no expected return value
 func (c *Client) execute(req *http.Request) error {
 	req.Header.Set("User-Agent", AGENT)
+	req.Header.Set("Content-Type", "application/json")
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
@@ -75,7 +79,7 @@ func (c *Client) execute(req *http.Request) error {
 		if resp.StatusCode == 400 {
 			return errors.New(parseError(&data))
 		} else {
-			return errors.New("Failed to make http request status=" + resp.Status)
+			return errors.New("Failed to make " + req.Method + " request to url=" + req.URL.String() + " status=" + resp.Status)
 		}
 	}
 	return nil
