@@ -29,3 +29,8 @@ You'll see here that the token is pulled from disk ```~/.groupme-go.prop``` and 
 - create message
 - list messages (and print our expectation)
 - delete the group
+
+Property file contains one field
+```
+token="your token not mine"
+```
