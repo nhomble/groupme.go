@@ -54,6 +54,13 @@ type CreateGroupCommand struct {
 	ImageUrl *string `json:"image_url"`
 }
 
+type UpdateGroupCommand struct {
+	Name       *string `json:"name"`
+	Share      bool    `json:"share"`
+	OfficeMode bool    `json:"office_mode"`
+	ImageUrl   *string `json:"image_url"`
+}
+
 var DefaultGroupQuery GroupQuery = GroupQuery{
 	Page:    1,
 	PerPage: 10,
@@ -71,7 +78,7 @@ func (api GroupAPI) getInternal(endpoint string, q *GroupQuery) ([]Group, error)
 	if len(q.Omit) > 0 {
 		omit = "&omit=" + strings.Join(q.Omit, ",")
 	}
-	url := fmt.Sprintf("%s%s?token=%s&page=%d&per_page=%d%s", BASE, endpoint, api.client.token, q.Page, q.PerPage, omit)
+	url := fmt.Sprintf("%s%s?token=%s&page=%d&per_page=%d%s", BASE, endpoint, (*api.client.TokenProvider).Get(), q.Page, q.PerPage, omit)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -101,7 +108,7 @@ func (api GroupAPI) FindFormer(q *GroupQuery) ([]Group, error) {
 
 // Get group by id
 func (api GroupAPI) Get(id string) (*Group, error) {
-	url := fmt.Sprintf("%s/groups/%s?token=%s", BASE, id, api.client.token)
+	url := fmt.Sprintf("%s/groups/%s?token=%s", BASE, id, (*api.client.TokenProvider).Get())
 	group := Group{}
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -119,9 +126,11 @@ func (api GroupAPI) Get(id string) (*Group, error) {
 }
 
 func (api GroupAPI) Create(cmd *CreateGroupCommand) (*Group, error) {
-	url := fmt.Sprintf("%s/groups?token=%s", BASE, api.client.token)
+	url := fmt.Sprintf("%s/groups?token=%s", BASE, (*api.client.TokenProvider).Get())
 	data, err := json.Marshal(cmd)
-	fmt.Println(string(data))
+	if err != nil {
+		return nil, err
+	}
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
@@ -136,7 +145,39 @@ func (api GroupAPI) Create(cmd *CreateGroupCommand) (*Group, error) {
 		return nil, err
 	}
 	return &group, nil
+}
 
+// Update a group by id
+func (api GroupAPI) Update(groupId string, cmd *UpdateGroupCommand) (*Group, error) {
+	url := fmt.Sprintf("%s/groups/%s/update?token=%s", BASE, groupId, (*api.client.TokenProvider).Get())
+	data, err := json.Marshal(cmd)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	if err != nil {
+		return nil, err
+	}
+	group := Group{}
+	data, err = api.client.getResponse(req)
+	if err != nil {
+		return nil, err
+	}
+	err = unravel(&data, &group)
+	if err != nil {
+		return nil, err
+	}
+	return &group, nil
+}
+
+// Delete the group by id
+func (api GroupAPI) Delete(groupId string) error {
+	url := fmt.Sprintf("%s/groups/%s/destroy?token=%s", BASE, groupId, (*api.client.TokenProvider).Get())
+	req, err := http.NewRequest(http.MethodPost, url, nil)
+	if err != nil {
+		return err
+	}
+	return api.client.execute(req)
 }
 
 // Parse the time since epoch time from groupme
