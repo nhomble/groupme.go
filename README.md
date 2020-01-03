@@ -22,6 +22,7 @@ client.Messages.Send(".. group id..", &groupme.SendMessageCommand{
 ```
 
 ## Examples
+### [Send Message](examples/sendMessage.go)
 ```sh
 $ go run examples/sendMessage.go
 ```
