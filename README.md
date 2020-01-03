@@ -2,7 +2,7 @@
 go sdk for groupme
 
 ## Summary
-A simple sdk with no dependencies outside of the stdlib. 
+A simple sdk for the [GroupMe API](https://dev.groupme.com/) with no dependencies outside of the stdlib. 
 
 ## Usage
 ### Import
