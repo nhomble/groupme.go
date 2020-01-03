@@ -34,3 +34,8 @@ Property file contains one field
 ```
 token="your token not mine"
 ```
+
+## Get it - but don't use it
+```sh
+$ go get github.com/nhomble/groupme.go/groupme
+```
