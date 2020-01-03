@@ -39,6 +39,7 @@ token="your token not mine"
 ```
 
 ## Get it - but don't use it
+.. unless you're part of the BOM squad
 ```sh
 $ go get github.com/nhomble/groupme.go/groupme
 ```
