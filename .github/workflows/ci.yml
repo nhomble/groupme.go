@@ -17,4 +17,6 @@ jobs:
       uses: actions/checkout@v1
 
     - name: Test
-      run: go test test/*
+      env:
+          GROUPME_TOKEN: ${{ secrets.GROUPME_TOKEN }}
+      run: go test ./test/...

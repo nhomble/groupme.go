@@ -2,6 +2,7 @@ package groupme
 
 import (
 	"github.com/nhomble/groupme.go/props"
+	"os"
 )
 
 type TokenProvider interface {
@@ -12,9 +13,22 @@ type SimpleTokenProvider struct {
 	token string
 }
 
+type EnvironmentTokenProvider struct {
+	Key string // optional field that is the environment variable key
+}
+
 // Get GroupMe API token
 func (p SimpleTokenProvider) Get() string {
 	return p.token
+}
+
+// Get GroupMe API token from environment
+func (e EnvironmentTokenProvider) Get() string {
+	k := "GO_GROUPME_API_TOKEN"
+	if len(e.Key) > 0 {
+		k = e.Key
+	}
+	return os.Getenv(k)
 }
 
 // Create token provider from in memory token
