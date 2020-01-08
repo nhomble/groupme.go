@@ -9,7 +9,12 @@ import (
 )
 
 func randomName() string {
-	return fmt.Sprintf("super test %d", rand.Int())
+	chars := []rune("abcdefghijklmnopqrstuvwxyz")
+	s := ""
+	for i := 0; i < 5+(rand.Int()%10); i++ {
+		s += string(chars[rand.Int()%len(chars)])
+	}
+	return fmt.Sprintf("super test %s", s)
 }
 
 func client() *groupme.Client {
@@ -37,11 +42,15 @@ func TestGetUser(t *testing.T) {
 
 func TestUpdateName(t *testing.T) {
 	client := client()
+	newName := randomName()
 	user, err := client.Users.Get()
 	if err != nil {
 		t.Fatal(err)
 	}
-	newName := randomName()
+	for newName == user.Name {
+		newName = randomName()
+	}
+
 	update := &groupme.UpdateUserCommand{
 		Name:  &newName,
 		Email: &user.Email,
@@ -49,9 +58,6 @@ func TestUpdateName(t *testing.T) {
 	_, err = client.Users.Update(update)
 	if err != nil {
 		t.Fatal(err)
-	}
-	if user.Name == newName {
-		t.Fatalf("Incredible our random name wasn't unique..")
 	}
 	updated, err := client.Users.Get()
 	if err != nil {
