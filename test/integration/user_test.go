@@ -1,35 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"github.com/nhomble/groupme.go/groupme"
-	"log"
-	"math/rand"
 	"testing"
 )
 
-func randomName() string {
-	chars := []rune("abcdefghijklmnopqrstuvwxyz")
-	s := ""
-	for i := 0; i < 5+(rand.Int()%10); i++ {
-		s += string(chars[rand.Int()%len(chars)])
-	}
-	return fmt.Sprintf("super test %s", s)
-}
-
-func client() *groupme.Client {
-	// configured in github secret settings
-	provider := groupme.EnvironmentTokenProvider{Key: "GROUPME_TOKEN"}
-	log.Println(provider.Get())
-	client, err := groupme.NewClient(provider, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return client
-}
-
 func TestGetUser(t *testing.T) {
-	client := client()
+	client := AClient()
 	user, err := client.Users.Get()
 	if err != nil {
 		t.Fatal(err)
@@ -41,14 +18,14 @@ func TestGetUser(t *testing.T) {
 }
 
 func TestUpdateName(t *testing.T) {
-	client := client()
-	newName := randomName()
+	client := AClient()
+	newName := RandomName()
 	user, err := client.Users.Get()
 	if err != nil {
 		t.Fatal(err)
 	}
 	for newName == user.Name {
-		newName = randomName()
+		newName = RandomName()
 	}
 
 	update := &groupme.UpdateUserCommand{

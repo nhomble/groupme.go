@@ -83,7 +83,7 @@ func (api MessageAPI) Query(groupId string, q *MessageQuery) (*MessageIndex, err
 		}
 		limit = fmt.Sprintf("&limit=%d", q.Limit)
 	}
-	url := fmt.Sprintf("%s/groups/%s/messages?token=%s%s%s%s%s", BASE, groupId, (*api.client.TokenProvider).Get(), before, since, after, limit)
+	url := fmt.Sprintf("%s/groups/%s/messages?%s%s%s%s", BASE, groupId, before, since, after, limit)
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func (api MessageAPI) Query(groupId string, q *MessageQuery) (*MessageIndex, err
 
 // Send a message to the group
 func (api MessageAPI) Send(groupId string, cmd *SendMessageCommand) (*Message, error) {
-	url := fmt.Sprintf("%s/groups/%s/messages?token=%s", BASE, groupId, (*api.client.TokenProvider).Get())
+	url := fmt.Sprintf("%s/groups/%s/messages", BASE, groupId)
 	data, err := json.Marshal(struct {
 		Message SendMessageCommand `json:"message"`
 	}{Message: *cmd})

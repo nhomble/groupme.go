@@ -43,6 +43,7 @@ func successful(code int) bool {
 func (c *Client) getResponse(req *http.Request) ([]byte, error) {
 	req.Header.Set("User-Agent", AGENT)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Access-Token", (*c.TokenProvider).Get())
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -68,6 +69,7 @@ func (c *Client) getResponse(req *http.Request) ([]byte, error) {
 func (c *Client) execute(req *http.Request) error {
 	req.Header.Set("User-Agent", AGENT)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Access-Token", (*c.TokenProvider).Get())
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
