@@ -18,5 +18,5 @@ jobs:
 
     - name: Test
       env:
-          GROUPME_TOKEN: ${{ secrets.GROUPME_TOKEN }}
+          GO_GROUPME_API_TOKEN: ${{ secrets.GROUPME_TOKEN }}
       run: go test ./test/...
