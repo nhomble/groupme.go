@@ -47,6 +47,12 @@ type MessageQuery struct {
 	Limit    *int
 }
 
+type MessageSearch struct {
+	Limit        *int
+	Criteria     func(message Message) bool
+	StopCriteria func(count int, total int, seen int) bool
+}
+
 var DefaultMessageQuery MessageQuery = MessageQuery{
 	nil, nil, nil, nil,
 }
@@ -55,6 +61,39 @@ type SendMessageCommand struct {
 	SourceGuid  string       `json:"source_guid"`
 	Text        string       `json:"text"`
 	Attachments []Attachment `json:"attachments,omitempty"`
+}
+
+func (api MessageAPI) Search(groupId string, search MessageSearch) (*MessageIndex, error) {
+	total := -1
+	seen := 0
+	count := 0
+	var ret []Message
+	var lastId *string
+	lastId = nil
+	for total == -1 || (seen < total && !search.StopCriteria(count, total, seen)) {
+		resp, err := api.Query(groupId, &MessageQuery{
+			BeforeId: lastId,
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		if total == -1 {
+			total = resp.Count
+		}
+
+		for _, message := range resp.Messages {
+			if search.Criteria(message) {
+				count += 1
+				ret = append(ret, message)
+			}
+			seen += 1
+		}
+		lastId = &resp.Messages[len(resp.Messages)-1].Id
+	}
+
+	return &MessageIndex{Count: count, Messages: ret}, nil
 }
 
 // Get messages in the group
