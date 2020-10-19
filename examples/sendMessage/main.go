@@ -17,7 +17,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	client, err := groupme.NewClient(provider, nil)
+	client, err := groupme.NewClient(provider)
+
 	if err != nil {
 		log.Fatal(err)
 	}
