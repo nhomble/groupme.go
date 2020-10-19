@@ -3,6 +3,7 @@ package groupme
 import (
 	"github.com/nhomble/groupme.go/props"
 	"os"
+	"path"
 )
 
 type TokenProvider interface {
@@ -37,8 +38,9 @@ func TokenProviderFromToken(t string) TokenProvider {
 }
 
 // Create token provider from properties file
-func TokenPoviderFromProperties(p string) (TokenProvider, error) {
-	config, err := props.View(p)
+func TokenPoviderFromProperties(p ...string) (TokenProvider, error) {
+	thePath := path.Join(p...)
+	config, err := props.View(thePath)
 	if err != nil {
 		return nil, err
 	}
