@@ -10,7 +10,7 @@ import (
 func AClient() *groupme.Client {
 	// configured in github secret settings
 	provider := groupme.EnvironmentTokenProvider{Key: "GROUPME_TOKEN"}
-	client, err := groupme.NewClient(provider, nil)
+	client, err := groupme.NewClient(provider)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -19,11 +19,8 @@ type Client struct {
 
 // Returns a new instance to a groupme client
 //	token provider
-//	httpClient 	- compose the http client
-func NewClient(provider TokenProvider, httpClient *http.Client) (*Client, error) {
-	if httpClient == nil {
-		httpClient = http.DefaultClient
-	}
+func NewClient(provider TokenProvider) (*Client, error) {
+	httpClient := http.DefaultClient
 	c := &Client{httpClient: httpClient}
 	c.TokenProvider = &provider
 
@@ -33,6 +30,12 @@ func NewClient(provider TokenProvider, httpClient *http.Client) (*Client, error)
 	c.Messages = &MessageAPI{client: c}
 
 	return c, nil
+}
+
+// Set your own http.Client and fluently return the Client
+func (c *Client) SetHttpClient(client http.Client) *Client {
+	c.httpClient = &client
+	return c
 }
 
 func successful(code int) bool {

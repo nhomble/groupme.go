@@ -13,12 +13,16 @@ import "github.com/nhomble/groupme.go/groupme"
 ```
 ### Send a message
 ```go
-provider := groupme.TokenProviderFromToken("... your access token with groupme ....")
-client, _ := groupme.NewClient(provider, nil)
-client.Messages.Send(".. group id..", &groupme.SendMessageCommand{
-		SourceGuid: "... guid ...",
-		Text:       "Houston we have landed",
-	})
+package main 
+import "github.com/nhomble/groupme.go/groupme"
+func main() {
+    provider := groupme.TokenProviderFromToken("... your access token with groupme ....")
+    client, _ := groupme.NewClient(provider)
+    client.Messages.Send(".. group id..", &groupme.SendMessageCommand{
+    		SourceGuid: "... guid ...",
+    		Text:       "Houston we have landed",
+    	})
+}
 ```
 
 ## Examples
