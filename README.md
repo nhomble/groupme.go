@@ -26,7 +26,7 @@ func main() {
 ```
 
 ## Examples
-### [Send Message](examples/sendMessage.go)
+### [Send Message](examples/sendMessage/main.go)
 ```sh
 $ go run examples/sendMessage.go
 ```
