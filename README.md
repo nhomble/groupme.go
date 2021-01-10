@@ -1,11 +1,11 @@
 # groupme.go
 [![Continuous Integration](https://github.com/nhomble/groupme.go/workflows/continuous-integration/badge.svg)](https://github.com/nhomble/groupme.go/actions)
-![Linter](https://github.com/nhomble/groupme.go/workflows/Linter/badge.svg)
+[![Linter](https://github.com/nhomble/groupme.go/workflows/Linter/badge.svg)](https://github.com/nhomble/groupme.go/actions?query=workflow%3ALinter)
 
 go sdk for groupme
 
 ## Summary
-A simple sdk for the [GroupMe API](https://dev.groupme.com/) with no dependencies outside of the stdlib. 
+A simple sdk for the [GroupMe API](https://dev.groupme.com/) with no dependencies outside of the stdlib.
 
 ## Usage
 ### Import
