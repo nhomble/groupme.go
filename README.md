@@ -29,7 +29,7 @@ func main() {
 
 ## Examples
 ### [Send Message](examples/sendMessage/main.go)
-```sh
+```bash
 go run examples/sendMessage.go
 ```
 
