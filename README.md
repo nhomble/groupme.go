@@ -29,7 +29,7 @@ func main() {
 
 ## Examples
 ### [Send Message](examples/sendMessage/main.go)
-```bash
+```sh
 go run examples/sendMessage.go
 ```
 
@@ -40,6 +40,6 @@ You'll see here that the token is pulled from disk ```~/.groupme-go.prop``` and 
 - delete the group
 
 Property file contains one field
-```
+```text
 token="your token not mine"
 ```
