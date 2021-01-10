@@ -12,6 +12,7 @@ A simple sdk for the [GroupMe API](https://dev.groupme.com/) with no dependencie
 ```go
 import "github.com/nhomble/groupme.go/groupme"
 ```
+
 ### Send a message
 ```go
 package main 
@@ -20,9 +21,9 @@ func main() {
     provider := groupme.TokenProviderFromToken("... your access token with groupme ....")
     client, _ := groupme.NewClient(provider)
     client.Messages.Send(".. group id..", &groupme.SendMessageCommand{
-    		SourceGuid: "... guid ...",
-    		Text:       "Houston we have landed",
-    	})
+        SourceGuid: "... guid ...",
+        Text:       "Houston we have landed",
+    })
 }
 ```
 
