@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/nhomble/groupme.go/groupme"
 	"log"
-	"math/rand"
 	"os"
 )
 
@@ -31,7 +31,7 @@ func main() {
 	}
 	fmt.Printf("Group created id=%s name=%s\n", group.Id, group.Name)
 	_, err = client.Messages.Send(group.Id, &groupme.SendMessageCommand{
-		SourceGuid: fmt.Sprintf("%d%d", rand.Int63(), rand.Int63()),
+		SourceGuid: uuid.New().String(),
 		Text:       "Message sent!",
 	})
 
