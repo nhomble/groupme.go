@@ -1,5 +1,6 @@
 # groupme.go
 [![Continuous Integration](https://github.com/nhomble/groupme.go/workflows/continuous-integration/badge.svg)](https://github.com/nhomble/groupme.go/actions)
+![Linter](https://github.com/nhomble/groupme.go/workflows/Linter/badge.svg)
 
 go sdk for groupme
 
