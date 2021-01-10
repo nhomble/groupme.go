@@ -30,7 +30,7 @@ func main() {
 ## Examples
 ### [Send Message](examples/sendMessage/main.go)
 ```sh
-$ go run examples/sendMessage.go
+go run examples/sendMessage.go
 ```
 
 You'll see here that the token is pulled from disk ```~/.groupme-go.prop``` and then we:
