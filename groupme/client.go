@@ -15,6 +15,7 @@ type Client struct {
 	Users         *UserAPI
 	Groups        *GroupAPI
 	Messages      *MessageAPI
+	Bots          *BotAPI
 }
 
 // Returns a new instance to a groupme client
@@ -28,6 +29,7 @@ func NewClient(provider TokenProvider) (*Client, error) {
 	c.Users = &UserAPI{client: c}
 	c.Groups = &GroupAPI{client: c}
 	c.Messages = &MessageAPI{client: c}
+	c.Bots = &BotAPI{client: c}
 
 	return c, nil
 }
