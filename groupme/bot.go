@@ -7,14 +7,16 @@ import (
 	"net/http"
 )
 
+// Client api responsible for all bot functionality
 type BotAPI struct {
 	client *Client
 }
 
+// Request command to send messages as a bot
 type BotMessageCommand struct {
-	BotId      string  `json:"bot_id"`
+	BotID      string  `json:"bot_id"`
 	Message    string  `json:"text"`
-	PictureUrl *string `json:"picture_url"`
+	PictureURL *string `json:"picture_url"`
 }
 
 // Send message from bot

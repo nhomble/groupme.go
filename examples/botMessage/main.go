@@ -14,7 +14,7 @@ func main() {
 	must(err)
 
 	err = client.Bots.Send(groupme.BotMessageCommand{
-		BotId:   "your bot id",
+		BotID:   "your bot id",
 		Message: "test",
 	})
 	must(err)
