@@ -35,7 +35,7 @@ type UpdateUserCommand struct {
 // Get authenticated users information from GroupMe
 func (api UserAPI) Get() (*User, error) {
 	user := User{}
-	url := api.client.makeUrl("/v3/users/me")
+	url := api.client.makeURL("/v3/users/me")
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func (api UserAPI) Get() (*User, error) {
 
 // Update users information on GroupMe
 func (api UserAPI) Update(cmd *UpdateUserCommand) (*User, error) {
-	url := api.client.makeUrl("/v3/users/update")
+	url := api.client.makeURL("/v3/users/update")
 	data, err := json.Marshal(cmd)
 	fmt.Println(string(data))
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))

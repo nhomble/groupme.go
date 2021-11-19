@@ -20,7 +20,7 @@ type BotMessageCommand struct {
 
 // Send message from bot
 func (api BotAPI) Send(cmd BotMessageCommand) error {
-	url := api.client.makeUrl("/v3/bots/post")
+	url := api.client.makeURL("/v3/bots/post")
 	data, err := json.Marshal(cmd)
 	if err != nil {
 		return err

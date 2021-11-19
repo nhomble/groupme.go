@@ -43,7 +43,7 @@ func (c *Client) SetHttpClient(client http.Client) *Client {
 	return c
 }
 
-// Override the default host and fluently return the Client
+// SetHost overrides the default host and fluently return the Client
 func (c *Client) SetHost(host string) *Client {
 	c.host = host
 	return c
@@ -102,7 +102,7 @@ func (c *Client) execute(req *http.Request) error {
 }
 
 // Format urls with override considerations
-func (c *Client) makeUrl(path string) string {
+func (c *Client) makeURL(path string) string {
 	base := fmt.Sprintf("https://%s", c.host)
 	return fmt.Sprintf("%s%s", base, path)
 }
