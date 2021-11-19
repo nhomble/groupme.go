@@ -5,7 +5,6 @@ import (
 	"strings"
 )
 
-const BASE = "https://api.groupme.com/v3"
 const DEFAULT_MESSAGE_LIMIT = 20
 
 func unravel(data *[]byte, dest interface{}) error {
