@@ -3,7 +3,6 @@ package groupme
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
@@ -21,7 +20,7 @@ type BotMessageCommand struct {
 
 // Send message from bot
 func (api BotAPI) Send(cmd BotMessageCommand) error {
-	url := fmt.Sprintf("%s/bots/post", BASE)
+	url := api.client.makeURL("/v3/bots/post")
 	data, err := json.Marshal(cmd)
 	if err != nil {
 		return err

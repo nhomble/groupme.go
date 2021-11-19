@@ -2,6 +2,7 @@ package groupme
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 )
@@ -11,6 +12,7 @@ const AGENT = "groupme.go/api"
 // GroupMe SDK client
 type Client struct {
 	httpClient    *http.Client
+	host          string
 	TokenProvider *TokenProvider
 	Users         *UserAPI
 	Groups        *GroupAPI
@@ -30,6 +32,7 @@ func NewClient(provider TokenProvider) (*Client, error) {
 	c.Groups = &GroupAPI{client: c}
 	c.Messages = &MessageAPI{client: c}
 	c.Bots = &BotAPI{client: c}
+	c.host = "api.groupme.com"
 
 	return c, nil
 }
@@ -37,6 +40,12 @@ func NewClient(provider TokenProvider) (*Client, error) {
 // Set your own http.Client and fluently return the Client
 func (c *Client) SetHttpClient(client http.Client) *Client {
 	c.httpClient = &client
+	return c
+}
+
+// SetHost overrides the default host and fluently return the Client
+func (c *Client) SetHost(host string) *Client {
+	c.host = host
 	return c
 }
 
@@ -90,4 +99,10 @@ func (c *Client) execute(req *http.Request) error {
 		}
 	}
 	return nil
+}
+
+// Format urls with override considerations
+func (c *Client) makeURL(path string) string {
+	base := fmt.Sprintf("https://%s", c.host)
+	return fmt.Sprintf("%s%s", base, path)
 }
