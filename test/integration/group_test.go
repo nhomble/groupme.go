@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/nhomble/groupme.go/groupme"
 	"testing"
+	"time"
 )
 
 func TestFindMakeDeleteGroupt(t *testing.T) {
@@ -33,6 +34,14 @@ func TestFindMakeDeleteGroupt(t *testing.T) {
 	if result.Name != name {
 		t.Errorf("Expected group with name=%s but got %s", name, result.Name)
 	}
+	await(t, 1*time.Second, 10*time.Second, func() bool {
+		groups, err = client.Groups.FindAll()
+		if err != nil {
+			t.Error(err)
+		}
+		return len(groups) == (1 + originalNumber)
+	})
+
 	groups, err = client.Groups.FindAll()
 	if err != nil {
 		t.Error(err)
@@ -41,22 +50,23 @@ func TestFindMakeDeleteGroupt(t *testing.T) {
 		t.Logf("%d> id=%s %s\n", i, g.Id, g.Name)
 	}
 
-	if len(groups) != (1 + originalNumber) {
-		t.Errorf("Expected %d groups in the search but found %d", 1+originalNumber, len(groups))
-	}
 	err = client.Groups.Delete(result.Id)
 	if err != nil {
 		t.Error(err)
 	}
+
+	await(t, 1*time.Second, 10*time.Second, func() bool {
+		groups, err = client.Groups.FindAll()
+		if err != nil {
+			t.Error(err)
+		}
+		return len(groups) == originalNumber
+	})
 	groups, err = client.Groups.FindAll()
 	if err != nil {
 		t.Error(err)
 	}
 	for i, g := range groups {
 		t.Logf("%d> id=%s name=%s\n", i, g.Id, g.Name)
-	}
-
-	if len(groups) != originalNumber {
-		t.Errorf("There should be the same number of old groups! But we found: original=%d current=%d", originalNumber, len(groups))
 	}
 }
