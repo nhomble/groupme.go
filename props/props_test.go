@@ -1,20 +1,16 @@
-package main
+package props
 
 import (
-	"fmt"
-	"github.com/nhomble/groupme.go/props"
 	"io/ioutil"
-	"math/rand"
-	"os"
+	"path"
 	"testing"
 )
 
 func TestView(t *testing.T) {
 	data := []byte("a=b")
-	n := fmt.Sprintf("/tmp/.props%f", rand.Float64())
-	defer os.Remove(n)
+	n := path.Join(t.TempDir(), "props")
 	ioutil.WriteFile(n, data, 0644)
-	config, err := props.View(n)
+	config, err := View(n)
 	if err != nil {
 		t.Error(err)
 	}
