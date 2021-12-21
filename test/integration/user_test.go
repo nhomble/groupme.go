@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/nhomble/groupme.go/groupme"
 	"testing"
+	"time"
 )
 
 func TestGetUser(t *testing.T) {
@@ -36,11 +37,12 @@ func TestUpdateName(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	updated, err := client.Users.Get()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if user.Name == updated.Name {
-		t.Fatal("Name didn't update!")
-	}
+
+	await(t, 1*time.Second, 10*time.Second, func() bool {
+		updated, err := client.Users.Get()
+		if err != nil {
+			t.Fatal(err)
+		}
+		return user.Name == updated.Name
+	})
 }
