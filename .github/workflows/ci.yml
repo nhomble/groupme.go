@@ -16,6 +16,9 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
 
+    - name: Groupme Tests
+      run: go test ./groupme/...
+
     - name: Property Tests
       run: go test ./props/...
 
