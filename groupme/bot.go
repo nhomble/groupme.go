@@ -21,8 +21,8 @@ type BotMessageCommand struct {
 type CreateBotCommand struct {
 	Name        string  `json:"name"`
 	GroupId     string  `json:"group_id"`
-	AvatarUrl   *string `json:"avatar_url"`
-	CallbackUrl *string `json:"callback_url"`
+	AvatarUrl   *string `json:"avatar_url,omitempty"`
+	CallbackUrl *string `json:"callback_url,omitempty"`
 }
 
 type CreateBotCommandRequest struct {
@@ -64,9 +64,12 @@ func (api BotAPI) Send(cmd BotMessageCommand) error {
 	return nil
 }
 
-func (api BotAPI) Create(cmd CreateBotCommand) (*Bot, error) {
+func (api BotAPI) Create(cmd CreateBotCommand) (*BotDefitionWithGroupId, error) {
 	url := api.client.makeURL("/v3/bots")
-	data, err := json.Marshal(cmd)
+	envelope := CreateBotCommandRequest{
+		Bot: cmd,
+	}
+	data, err := json.Marshal(envelope)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +86,7 @@ func (api BotAPI) Create(cmd CreateBotCommand) (*Bot, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &bot, nil
+	return &bot.Bot, nil
 }
 
 func (api BotAPI) List() ([]BotDefitionWithGroupId, error) {
@@ -105,7 +108,7 @@ func (api BotAPI) List() ([]BotDefitionWithGroupId, error) {
 }
 
 func (api BotAPI) Delete(botId string) error {
-	url := api.client.makeURL("/bots/destroy")
+	url := api.client.makeURL("/v3/bots/destroy")
 	data, err := json.Marshal(DeleteBotCommand{
 		BotId: botId,
 	})
