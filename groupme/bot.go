@@ -18,17 +18,19 @@ type BotMessageCommand struct {
 	PictureURL *string `json:"picture_url"`
 }
 
+// Request body to create a bot
 type CreateBotCommand struct {
 	Name        string  `json:"name"`
 	GroupId     string  `json:"group_id"`
-	AvatarUrl   *string `json:"avatar_url,omitempty"`
-	CallbackUrl *string `json:"callback_url,omitempty"`
+	AvatarURL   *string `json:"avatar_url,omitempty"`
+	CallbackURL *string `json:"callback_url,omitempty"`
 }
 
-type CreateBotCommandRequest struct {
+type createBotCommandRequest struct {
 	Bot CreateBotCommand `json:"bot"`
 }
 
+// Bot data model in GroupMe
 type BotDefitionWithGroupId struct {
 	Name          string  `json:"name"`
 	GroupId       string  `json:"group_id"`
@@ -38,11 +40,11 @@ type BotDefitionWithGroupId struct {
 	BotId         string  `json:"bot_id"`
 }
 
-type Bot struct {
+type bot struct {
 	Bot BotDefitionWithGroupId `json:"bot"`
 }
 
-type DeleteBotCommand struct {
+type deleteBotCommand struct {
 	BotId string `json:"bot_id"`
 }
 
@@ -66,7 +68,7 @@ func (api BotAPI) Send(cmd BotMessageCommand) error {
 
 func (api BotAPI) Create(cmd CreateBotCommand) (*BotDefitionWithGroupId, error) {
 	url := api.client.makeURL("/v3/bots")
-	envelope := CreateBotCommandRequest{
+	envelope := createBotCommandRequest{
 		Bot: cmd,
 	}
 	data, err := json.Marshal(envelope)
@@ -77,7 +79,7 @@ func (api BotAPI) Create(cmd CreateBotCommand) (*BotDefitionWithGroupId, error) 
 	if err != nil {
 		return nil, err
 	}
-	bot := Bot{}
+	bot := bot{}
 	data, err = api.client.getResponse(req)
 	if err != nil {
 		return nil, err
@@ -109,7 +111,7 @@ func (api BotAPI) List() ([]BotDefitionWithGroupId, error) {
 
 func (api BotAPI) Delete(botId string) error {
 	url := api.client.makeURL("/v3/bots/destroy")
-	data, err := json.Marshal(DeleteBotCommand{
+	data, err := json.Marshal(deleteBotCommand{
 		BotId: botId,
 	})
 	if err != nil {

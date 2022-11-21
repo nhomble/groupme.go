@@ -17,13 +17,13 @@ func main() {
 		fmt.Printf("%s %s %s\n", b.Name, b.BotId, b.GroupId)
 	}
 
-	avatarUrl := "https://imagehost.com/avatar.jpg"
-	callBackUrl := "http://null.com/a"
+	avatarURL := "https://imagehost.com/avatar.jpg"
+	callBackURL := "http://null.com/a"
 	_, err = client.Bots.Create(groupme.CreateBotCommand{
 		Name:        "test",
 		GroupId:     "11617071",
-		AvatarUrl:   &avatarUrl,
-		CallbackUrl: &callBackUrl,
+		AvatarURL:   &avatarURL,
+		CallbackURL: &callBackURL,
 	})
 	must(err)
 }
