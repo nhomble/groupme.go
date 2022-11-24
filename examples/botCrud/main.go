@@ -19,13 +19,21 @@ func main() {
 
 	avatarURL := "https://imagehost.com/avatar.jpg"
 	callBackURL := "http://null.com/a"
-	_, err = client.Bots.Create(groupme.CreateBotCommand{
+	bot, err := client.Bots.Create(groupme.CreateBotCommand{
 		Name:        "test",
 		GroupId:     "11617071",
 		AvatarURL:   &avatarURL,
 		CallbackURL: &callBackURL,
 	})
 	must(err)
+
+	bot2, _ := client.Bots.Get((*bot).BotId)
+	client.Bots.Update(bot2.BotId, groupme.UpdateBotCommand{
+		Name:        "test2",
+		GroupId:     "11617071",
+		AvatarURL:   &avatarURL,
+		CallbackURL: &callBackURL,
+	})
 }
 
 func must(err error) {

@@ -3,6 +3,7 @@ package groupme
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -20,6 +21,14 @@ type BotMessageCommand struct {
 
 // Request body to create a bot
 type CreateBotCommand struct {
+	Name        string  `json:"name"`
+	GroupId     string  `json:"group_id"`
+	AvatarURL   *string `json:"avatar_url,omitempty"`
+	CallbackURL *string `json:"callback_url,omitempty"`
+}
+
+// Request body to update a bot
+type UpdateBotCommand struct {
 	Name        string  `json:"name"`
 	GroupId     string  `json:"group_id"`
 	AvatarURL   *string `json:"avatar_url,omitempty"`
@@ -107,6 +116,43 @@ func (api BotAPI) List() ([]BotDefitionWithGroupId, error) {
 		return nil, err
 	}
 	return bots, nil
+}
+
+func (api BotAPI) Get(botId string) (*BotDefitionWithGroupId, error) {
+	bots, err := api.List()
+	if err != nil {
+		return nil, err
+	}
+	for _, bot := range bots {
+		if bot.BotId == botId {
+			return &bot, nil
+		}
+	}
+	return nil, nil
+}
+
+// hack api until I figure out a better approach with GroupMe apis. Nothing in public docs
+func (api BotAPI) Update(botId string, command UpdateBotCommand) (*BotDefitionWithGroupId, error) {
+	bot, err := api.Get(botId)
+	if err != nil {
+		return nil, err
+	}
+	if bot == nil {
+		return nil, fmt.Errorf(fmt.Sprintf("No bot exists for botId=%s", botId))
+	}
+
+	err = api.Delete(botId)
+	if err != nil {
+		return nil, err
+	}
+
+	bot, err = api.Create(CreateBotCommand(command))
+
+	if err != nil {
+		return nil, err
+	}
+
+	return bot, err
 }
 
 func (api BotAPI) Delete(botId string) error {
