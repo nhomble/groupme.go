@@ -3,7 +3,6 @@ package groupme
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 )
@@ -55,7 +54,9 @@ func (api UserAPI) Get() (*User, error) {
 func (api UserAPI) Update(cmd *UpdateUserCommand) (*User, error) {
 	url := api.client.makeURL("/v3/users/update")
 	data, err := json.Marshal(cmd)
-	fmt.Println(string(data))
+	if err != nil {
+		return nil, err
+	}
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
