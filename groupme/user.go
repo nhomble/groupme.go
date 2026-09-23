@@ -26,10 +26,10 @@ type User struct {
 
 // GroupeMe Update User Payload
 type UpdateUserCommand struct {
-	AvatarUrl *string `json:"avatar_url"`
-	Name      *string `json:"name"`
-	Email     *string `json:"email"`
-	ZipCode   *string `json:"zip_code"`
+	AvatarUrl *string `json:"avatar_url,omitempty"`
+	Name      *string `json:"name,omitempty"`
+	Email     *string `json:"email,omitempty"`
+	ZipCode   *string `json:"zip_code,omitempty"`
 }
 
 // Get authenticated users information from GroupMe

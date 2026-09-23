@@ -53,14 +53,14 @@ type GroupQuery struct {
 type CreateGroupCommand struct {
 	Name     string  `json:"name"`
 	Share    bool    `json:"share"`
-	ImageUrl *string `json:"image_url"`
+	ImageUrl *string `json:"image_url,omitempty"`
 }
 
 type UpdateGroupCommand struct {
-	Name       *string `json:"name"`
-	Share      bool    `json:"share"`
-	OfficeMode bool    `json:"office_mode"`
-	ImageUrl   *string `json:"image_url"`
+	Name       *string `json:"name,omitempty"`
+	Share      *bool   `json:"share,omitempty"`
+	OfficeMode *bool   `json:"office_mode,omitempty"`
+	ImageUrl   *string `json:"image_url,omitempty"`
 }
 
 var DefaultGroupQuery GroupQuery = GroupQuery{

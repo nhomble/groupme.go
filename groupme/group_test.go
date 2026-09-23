@@ -1,11 +1,39 @@
 package groupme
 
 import (
+	"encoding/json"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
 )
+
+func TestUpdateGroupCommandOmitsUnsetFields(t *testing.T) {
+	name := "new-name"
+	cmd := &UpdateGroupCommand{
+		Name: &name,
+	}
+
+	data, err := json.Marshal(cmd)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	marshaled := string(data)
+
+	if !strings.Contains(marshaled, `"name":"new-name"`) {
+		t.Errorf("expected marshaled command to include name, got %s", marshaled)
+	}
+	if strings.Contains(marshaled, `"share"`) {
+		t.Errorf("expected marshaled command to omit share, got %s", marshaled)
+	}
+	if strings.Contains(marshaled, `"office_mode"`) {
+		t.Errorf("expected marshaled command to omit office_mode, got %s", marshaled)
+	}
+	if strings.Contains(marshaled, `"image_url"`) {
+		t.Errorf("expected marshaled command to omit image_url, got %s", marshaled)
+	}
+}
 
 func TestJoinEscapesShareUrlAndGroupId(t *testing.T) {
 	httpmock.Activate()

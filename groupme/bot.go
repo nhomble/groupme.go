@@ -21,7 +21,7 @@ type BotAPI struct {
 type BotMessageCommand struct {
 	BotID      string  `json:"bot_id"`
 	Message    string  `json:"text"`
-	PictureURL *string `json:"picture_url"`
+	PictureURL *string `json:"picture_url,omitempty"`
 }
 
 // Request body to create a bot

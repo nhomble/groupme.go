@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
@@ -25,6 +26,23 @@ func TestSendMessage(t *testing.T) {
 
 	if httpmock.GetTotalCallCount() != 1 {
 		t.Errorf("Did not mock send message")
+	}
+}
+
+func TestBotMessageCommandOmitsUnsetPictureURL(t *testing.T) {
+	cmd := BotMessageCommand{
+		BotID:   "botId",
+		Message: "Hello",
+	}
+
+	data, err := json.Marshal(cmd)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	marshaled := string(data)
+
+	if strings.Contains(marshaled, `"picture_url"`) {
+		t.Errorf("expected marshaled command to omit picture_url, got %s", marshaled)
 	}
 }
 

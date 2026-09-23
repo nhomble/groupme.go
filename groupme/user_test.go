@@ -1,6 +1,7 @@
 package groupme
 
 import (
+	"encoding/json"
 	"io"
 	"os"
 	"strings"
@@ -8,6 +9,32 @@ import (
 
 	"github.com/jarcoal/httpmock"
 )
+
+func TestUpdateUserCommandOmitsUnsetFields(t *testing.T) {
+	name := "new-name"
+	cmd := &UpdateUserCommand{
+		Name: &name,
+	}
+
+	data, err := json.Marshal(cmd)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	marshaled := string(data)
+
+	if !strings.Contains(marshaled, `"name":"new-name"`) {
+		t.Errorf("expected marshaled command to include name, got %s", marshaled)
+	}
+	if strings.Contains(marshaled, `"email"`) {
+		t.Errorf("expected marshaled command to omit email, got %s", marshaled)
+	}
+	if strings.Contains(marshaled, `"zip_code"`) {
+		t.Errorf("expected marshaled command to omit zip_code, got %s", marshaled)
+	}
+	if strings.Contains(marshaled, `"avatar_url"`) {
+		t.Errorf("expected marshaled command to omit avatar_url, got %s", marshaled)
+	}
+}
 
 func TestUpdateDoesNotPrintPIIToStdout(t *testing.T) {
 	httpmock.Activate()
