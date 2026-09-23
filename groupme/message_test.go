@@ -1,12 +1,49 @@
 package groupme
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
 )
+
+func TestMessageAttachmentsDecoded(t *testing.T) {
+	payload := `{
+		"id": "123",
+		"text": "check this out",
+		"attachments": [
+			{"type": "image", "url": "https://i.groupme.com/123.jpg"},
+			{"type": "mentions", "user_ids": ["1", "2"], "loci": [[0, 5], [6, 3]]}
+		]
+	}`
+
+	var message Message
+	if err := json.Unmarshal([]byte(payload), &message); err != nil {
+		t.Fatalf("unexpected error unmarshaling message: %v", err)
+	}
+
+	if len(message.Attachments) != 2 {
+		t.Fatalf("expected 2 attachments, got %d", len(message.Attachments))
+	}
+
+	image := message.Attachments[0]
+	if image.Type != "image" {
+		t.Errorf("expected image type %q, got %q", "image", image.Type)
+	}
+	if image.URL != "https://i.groupme.com/123.jpg" {
+		t.Errorf("expected image url to be populated, got %q", image.URL)
+	}
+
+	mentions := message.Attachments[1]
+	if mentions.Type != "mentions" {
+		t.Errorf("expected mentions type %q, got %q", "mentions", mentions.Type)
+	}
+	if len(mentions.UserIDs) != 2 || mentions.UserIDs[0] != "1" || mentions.UserIDs[1] != "2" {
+		t.Errorf("expected mentions user_ids to be populated, got %v", mentions.UserIDs)
+	}
+}
 
 func TestQueryMessagesLimitDereferenced(t *testing.T) {
 	httpmock.Activate()

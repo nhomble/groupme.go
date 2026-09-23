@@ -20,7 +20,21 @@ type PreviewMessage struct {
 	Text     string `json:"text"`
 }
 
+// Attachment represents a single attachment on a GroupMe message. GroupMe
+// attachments are polymorphic: the Type field determines which of the
+// remaining fields are populated (e.g. "image" uses URL, "location" uses
+// Lat/Lng/Name, "mentions" uses UserIDs/Loci, "emoji" uses Placeholder/
+// Charmap). Fields not applicable to a given Type are left zero-valued.
 type Attachment struct {
+	Type        string   `json:"type"`
+	URL         string   `json:"url,omitempty"`
+	Lat         string   `json:"lat,omitempty"`
+	Lng         string   `json:"lng,omitempty"`
+	Name        string   `json:"name,omitempty"`
+	UserIDs     []string `json:"user_ids,omitempty"`
+	Loci        [][]int  `json:"loci,omitempty"`
+	Placeholder string   `json:"placeholder,omitempty"`
+	Charmap     [][]int  `json:"charmap,omitempty"`
 }
 
 type Message struct {
