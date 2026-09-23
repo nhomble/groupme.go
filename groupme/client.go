@@ -79,6 +79,40 @@ func (c *Client) getResponse(req *http.Request) ([]byte, error) {
 	return data, nil
 }
 
+// getResponseWithStatus behaves like getResponse but also returns the raw
+// HTTP status code, and treats any status listed in allowedStatuses as a
+// non-error response (its body, if any, is returned as-is).
+func (c *Client) getResponseWithStatus(req *http.Request, allowedStatuses ...int) ([]byte, int, error) {
+	req.Header.Set("User-Agent", AGENT)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Access-Token", (*c.TokenProvider).Get())
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer resp.Body.Close()
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, resp.StatusCode, err
+	}
+
+	if successful(resp.StatusCode) {
+		return data, resp.StatusCode, nil
+	}
+
+	for _, s := range allowedStatuses {
+		if resp.StatusCode == s {
+			return data, resp.StatusCode, nil
+		}
+	}
+
+	if resp.StatusCode == 400 {
+		return nil, resp.StatusCode, errors.New(parseError(&data))
+	}
+	return nil, resp.StatusCode, errors.New("Failed to make " + req.Method + " request to url=" + req.URL.String() + " status=" + resp.Status)
+}
+
 // Execute request with no expected return value
 func (c *Client) execute(req *http.Request) error {
 	req.Header.Set("User-Agent", AGENT)
