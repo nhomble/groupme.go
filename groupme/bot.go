@@ -25,18 +25,20 @@ type BotMessageCommand struct {
 
 // Request body to create a bot
 type CreateBotCommand struct {
-	Name        string  `json:"name"`
-	GroupId     string  `json:"group_id"`
-	AvatarURL   *string `json:"avatar_url,omitempty"`
-	CallbackURL *string `json:"callback_url,omitempty"`
+	Name         string  `json:"name"`
+	GroupId      string  `json:"group_id"`
+	AvatarURL    *string `json:"avatar_url,omitempty"`
+	CallbackURL  *string `json:"callback_url,omitempty"`
+	Notification *bool   `json:"dm_notification,omitempty"`
 }
 
 // Request body to update a bot
 type UpdateBotCommand struct {
-	Name        string  `json:"name"`
-	GroupId     string  `json:"group_id"`
-	AvatarURL   *string `json:"avatar_url,omitempty"`
-	CallbackURL *string `json:"callback_url,omitempty"`
+	Name         string  `json:"name"`
+	GroupId      string  `json:"group_id"`
+	AvatarURL    *string `json:"avatar_url,omitempty"`
+	CallbackURL  *string `json:"callback_url,omitempty"`
+	Notification *bool   `json:"dm_notification,omitempty"`
 }
 
 type createBotCommandRequest struct {
@@ -135,14 +137,41 @@ func (api BotAPI) Get(botId string) (*BotDefitionWithGroupId, error) {
 	return nil, ErrBotNotFound
 }
 
+// Update simulates updating a bot. GroupMe has no real update endpoint, so
+// this is implemented as create-then-delete: a new bot is created with the
+// desired fields (falling back to the existing bot's fields for anything not
+// explicitly overridden by command), and only once that succeeds is the old
+// bot deleted. This avoids leaving the caller with no bot at all if Create
+// fails, but it means the returned bot has a NEW BotId distinct from botId.
+// Callers must update any stored bot ID and re-register webhooks/callback
+// URLs (and any other GroupMe-side configuration keyed on the bot ID) after
+// calling this.
+//
 // hack api until I figure out a better approach with GroupMe apis. Nothing in public docs
 func (api BotAPI) Update(botId string, command UpdateBotCommand) (*BotDefitionWithGroupId, error) {
-	bot, err := api.Get(botId)
+	old, err := api.Get(botId)
 	if err != nil {
 		return nil, err
 	}
-	if bot == nil {
-		return nil, fmt.Errorf(fmt.Sprintf("No bot exists for botId=%s", botId))
+	if old == nil {
+		return nil, fmt.Errorf("no bot exists for botId=%s", botId)
+	}
+
+	createCmd := CreateBotCommand(command)
+	if createCmd.AvatarURL == nil {
+		createCmd.AvatarURL = old.AvatarUrl
+	}
+	if createCmd.CallbackURL == nil {
+		createCmd.CallbackURL = old.CallbackUrl
+	}
+	if createCmd.Notification == nil {
+		oldNotification := old.Notifications
+		createCmd.Notification = &oldNotification
+	}
+
+	newBot, err := api.Create(createCmd)
+	if err != nil {
+		return nil, err
 	}
 
 	err = api.Delete(botId)
@@ -150,13 +179,7 @@ func (api BotAPI) Update(botId string, command UpdateBotCommand) (*BotDefitionWi
 		return nil, err
 	}
 
-	bot, err = api.Create(CreateBotCommand(command))
-
-	if err != nil {
-		return nil, err
-	}
-
-	return bot, err
+	return newBot, nil
 }
 
 func (api BotAPI) Delete(botId string) error {
