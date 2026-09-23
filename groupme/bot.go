@@ -9,19 +9,19 @@ import (
 // ErrBotNotFound is returned when no bot matches the given ID
 var ErrBotNotFound = errors.New("bot not found")
 
-// Client api responsible for all bot functionality
+// BotAPI is the client API responsible for all bot functionality.
 type BotAPI struct {
 	client *Client
 }
 
-// Request command to send messages as a bot
+// BotMessageCommand is the request command to send messages as a bot.
 type BotMessageCommand struct {
 	BotID      string  `json:"bot_id"`
 	Message    string  `json:"text"`
 	PictureURL *string `json:"picture_url,omitempty"`
 }
 
-// Request body to create a bot
+// CreateBotCommand is the request body to create a bot.
 type CreateBotCommand struct {
 	Name         string  `json:"name"`
 	GroupID      string  `json:"group_id"`
@@ -30,7 +30,7 @@ type CreateBotCommand struct {
 	Notification *bool   `json:"dm_notification,omitempty"`
 }
 
-// Request body to update a bot
+// UpdateBotCommand is the request body to update a bot.
 type UpdateBotCommand struct {
 	Name         string  `json:"name"`
 	GroupID      string  `json:"group_id"`
@@ -43,7 +43,7 @@ type createBotCommandRequest struct {
 	Bot CreateBotCommand `json:"bot"`
 }
 
-// Bot data model in GroupMe
+// BotDefinitionForGroup is the bot data model in GroupMe.
 type BotDefinitionForGroup struct {
 	Name          string  `json:"name"`
 	GroupID       string  `json:"group_id"`
@@ -61,11 +61,12 @@ type deleteBotCommand struct {
 	BotID string `json:"bot_id"`
 }
 
-// Send message from bot
+// Send sends a message from the bot.
 func (api BotAPI) Send(cmd BotMessageCommand) error {
 	return api.client.do(http.MethodPost, "/v3/bots/post", cmd, nil)
 }
 
+// Create creates a new bot.
 func (api BotAPI) Create(cmd CreateBotCommand) (*BotDefinitionForGroup, error) {
 	envelope := createBotCommandRequest{Bot: cmd}
 	env := bot{}
@@ -75,6 +76,7 @@ func (api BotAPI) Create(cmd CreateBotCommand) (*BotDefinitionForGroup, error) {
 	return &env.Bot, nil
 }
 
+// List lists all bots for the authenticated user.
 func (api BotAPI) List() ([]BotDefinitionForGroup, error) {
 	var bots []BotDefinitionForGroup
 	if err := api.client.do(http.MethodGet, "/v3/bots", nil, &bots); err != nil {
@@ -83,6 +85,7 @@ func (api BotAPI) List() ([]BotDefinitionForGroup, error) {
 	return bots, nil
 }
 
+// Get returns the bot with the given ID.
 func (api BotAPI) Get(botId string) (*BotDefinitionForGroup, error) {
 	bots, err := api.List()
 	if err != nil {
@@ -141,6 +144,7 @@ func (api BotAPI) Update(botId string, command UpdateBotCommand) (*BotDefinition
 	return newBot, nil
 }
 
+// Delete deletes the bot with the given ID.
 func (api BotAPI) Delete(botId string) error {
 	return api.client.do(http.MethodPost, "/v3/bots/destroy", deleteBotCommand{BotID: botId}, nil)
 }

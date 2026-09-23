@@ -8,10 +8,12 @@ import (
 	"time"
 )
 
+// GroupAPI is the client API responsible for all group functionality.
 type GroupAPI struct {
 	client *Client
 }
 
+// Member is a group member.
 type Member struct {
 	UserID   string `json:"user_id"`
 	Nickname string `json:"nickname"`
@@ -19,6 +21,7 @@ type Member struct {
 	ImageURL string `json:"image_url"`
 }
 
+// GroupMessages summarizes the message activity of a group.
 type GroupMessages struct {
 	Count                int            `json:"count"`
 	LastMessageID        string         `json:"last_message_id"`
@@ -26,6 +29,7 @@ type GroupMessages struct {
 	Preview              PreviewMessage `json:"preview"`
 }
 
+// Group is the GroupMe group data model.
 type Group struct {
 	ID            string        `json:"id"`
 	Name          string        `json:"name"`
@@ -40,18 +44,21 @@ type Group struct {
 	Messages      GroupMessages `json:"messages"`
 }
 
+// GroupQuery controls pagination and field omission when listing groups.
 type GroupQuery struct {
 	Page    int
 	PerPage int
 	Omit    []string
 }
 
+// CreateGroupCommand is the request body to create a group.
 type CreateGroupCommand struct {
 	Name     string  `json:"name"`
 	Share    bool    `json:"share"`
 	ImageURL *string `json:"image_url,omitempty"`
 }
 
+// UpdateGroupCommand is the request body to update a group.
 type UpdateGroupCommand struct {
 	Name       *string `json:"name,omitempty"`
 	Share      *bool   `json:"share,omitempty"`
@@ -107,11 +114,13 @@ func forGroup(client *Client, method, path string, in interface{}) (*Group, erro
 	return &group, nil
 }
 
-// List groups the authenticated user is part of
+// Find lists groups the authenticated user is part of.
 func (api GroupAPI) Find(q *GroupQuery) ([]Group, error) {
 	return api.searchInternal("/groups", q)
 }
 
+// FindAll lists all groups the authenticated user is part of, paginating
+// through every page.
 func (api GroupAPI) FindAll() ([]Group, error) {
 	groups := []Group{}
 	for i := 1; ; i += 1 {
@@ -129,7 +138,7 @@ func (api GroupAPI) FindAll() ([]Group, error) {
 	return groups, nil
 }
 
-// List groups the authenticated user was a part of (but can rejoin)
+// FindFormer lists groups the authenticated user was a part of (but can rejoin).
 func (api GroupAPI) FindFormer(q *GroupQuery) ([]Group, error) {
 	return api.searchInternal("/groups/former", q)
 }
@@ -139,6 +148,7 @@ func (api GroupAPI) Get(id string) (*Group, error) {
 	return forGroup(api.client, http.MethodGet, fmt.Sprintf("/v3/groups/%s", url.PathEscape(id)), nil)
 }
 
+// Create creates a new group.
 func (api GroupAPI) Create(cmd CreateGroupCommand) (*Group, error) {
 	return forGroup(api.client, http.MethodPost, "/v3/groups", cmd)
 }
@@ -158,7 +168,7 @@ func (api GroupAPI) Join(groupId string, shareUrl string) (*Group, error) {
 	return forGroup(api.client, http.MethodPost, fmt.Sprintf("/v3/groups/%s/join/%s", url.PathEscape(groupId), url.PathEscape(shareUrl)), nil)
 }
 
-// Rejoin a group this user had previously joined
+// ReJoin rejoins a group this user had previously joined.
 func (api GroupAPI) ReJoin(groupId string) (*Group, error) {
 	cmd := struct {
 		ID string `json:"group_id"`
@@ -168,17 +178,17 @@ func (api GroupAPI) ReJoin(groupId string) (*Group, error) {
 	return forGroup(api.client, http.MethodPost, "/v3/groups/join", cmd)
 }
 
-// Parse the time since epoch time from groupme
+// CreatedAtParsed parses the group's created-at epoch time.
 func (group Group) CreatedAtParsed() time.Time {
 	return time.Unix(group.CreatedAt, 0)
 }
 
-// Parse the time since epoch time from groupme
+// UpdatedAtParsed parses the group's updated-at epoch time.
 func (group Group) UpdatedAtParsed() time.Time {
 	return time.Unix(group.UpdatedAt, 0)
 }
 
-// Parse the time since epoch time from groupme
+// LastMessageCreatedAtParsed parses the last message's created-at epoch time.
 func (group GroupMessages) LastMessageCreatedAtParsed() time.Time {
 	return time.Unix(group.LastMessageCreatedAt, 0)
 }

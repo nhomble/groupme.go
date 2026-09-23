@@ -1,3 +1,4 @@
+// Package props reads simple key=value properties files.
 package props
 
 import (
@@ -6,6 +7,7 @@ import (
 	"strings"
 )
 
+// GroupmeProps holds properties parsed from a properties file.
 type GroupmeProps map[string]string
 
 // View properties in map

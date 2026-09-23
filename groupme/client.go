@@ -10,13 +10,14 @@ import (
 	"time"
 )
 
+// UserAgent is the User-Agent header sent with every request.
 const UserAgent = "groupme.go/api"
 
 // defaultHTTPTimeout bounds outbound requests so a stalled connection
 // cannot block a caller forever.
 const defaultHTTPTimeout = 30 * time.Second
 
-// GroupMe SDK client
+// Client is the GroupMe SDK client.
 type Client struct {
 	httpClient    *http.Client
 	host          string
@@ -27,8 +28,7 @@ type Client struct {
 	Bots          *BotAPI
 }
 
-// Returns a new instance to a groupme client
-//	token provider
+// NewClient returns a new Client using the given TokenProvider.
 func NewClient(provider TokenProvider) (*Client, error) {
 	if _, err := provider.Get(); err != nil {
 		return nil, fmt.Errorf("invalid token provider: %w", err)
@@ -48,7 +48,7 @@ func NewClient(provider TokenProvider) (*Client, error) {
 	return c, nil
 }
 
-// Set your own http.Client and fluently return the Client
+// SetHTTPClient sets a custom http.Client and fluently returns the Client.
 func (c *Client) SetHTTPClient(client *http.Client) *Client {
 	c.httpClient = client
 	return c
