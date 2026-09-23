@@ -41,14 +41,20 @@ func TestQueryMessagesLimitAboveMaxRejected(t *testing.T) {
 	}
 }
 
+// registerMessagesResponder registers a GET responder for the messages
+// endpoint that always returns the given canned JSON body.
+func registerMessagesResponder(body string) {
+	httpmock.RegisterResponder("GET", `=~^https://api\.groupme\.com/v3/groups/groupId/messages`,
+		func(req *http.Request) (*http.Response, error) {
+			return httpmock.NewStringResponse(200, body), nil
+		})
+}
+
 func TestSearchZeroValueDoesNotPanic(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder("GET", `=~^https://api\.groupme\.com/v3/groups/groupId/messages`,
-		func(req *http.Request) (*http.Response, error) {
-			return httpmock.NewStringResponse(200, `{"response":{"count":0,"messages":[]}}`), nil
-		})
+	registerMessagesResponder(`{"response":{"count":0,"messages":[]}}`)
 
 	client, _ := NewClient(TokenProviderFromToken("test"))
 	result, err := client.Messages.Search("groupId", MessageSearch{})
@@ -91,10 +97,7 @@ func TestSearchRespectsLimit(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder("GET", `=~^https://api\.groupme\.com/v3/groups/groupId/messages`,
-		func(req *http.Request) (*http.Response, error) {
-			return httpmock.NewStringResponse(200, `{"response":{"count":10,"messages":[{"id":"1"},{"id":"2"},{"id":"3"}]}}`), nil
-		})
+	registerMessagesResponder(`{"response":{"count":10,"messages":[{"id":"1"},{"id":"2"},{"id":"3"}]}}`)
 
 	client, _ := NewClient(TokenProviderFromToken("test"))
 	limit := 2

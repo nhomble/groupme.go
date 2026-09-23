@@ -4,10 +4,31 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"reflect"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
 )
+
+// assertAPIError asserts that err is a non-nil *APIError with the given
+// StatusCode and Errors, and returns it for further inspection.
+func assertAPIError(t *testing.T, err error, wantStatus int, wantErrors []string) *APIError {
+	t.Helper()
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	apiErr, ok := err.(*APIError)
+	if !ok {
+		t.Fatalf("expected *APIError, got %T: %v", err, err)
+	}
+	if apiErr.StatusCode != wantStatus {
+		t.Errorf("expected StatusCode=%d, got %d", wantStatus, apiErr.StatusCode)
+	}
+	if !reflect.DeepEqual(apiErr.Errors, wantErrors) {
+		t.Errorf("expected parsed errors %v, got %v", wantErrors, apiErr.Errors)
+	}
+	return apiErr
+}
 
 func TestGetResponse401ReturnsAPIError(t *testing.T) {
 	httpmock.Activate()
@@ -19,19 +40,7 @@ func TestGetResponse401ReturnsAPIError(t *testing.T) {
 	client, _ := NewClient(TokenProviderFromToken("test"))
 	_, err := client.Users.Get()
 
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-	apiErr, ok := err.(*APIError)
-	if !ok {
-		t.Fatalf("expected *APIError, got %T: %v", err, err)
-	}
-	if apiErr.StatusCode != 401 {
-		t.Errorf("expected StatusCode=401, got %d", apiErr.StatusCode)
-	}
-	if len(apiErr.Errors) != 1 || apiErr.Errors[0] != "invalid token" {
-		t.Errorf("expected parsed errors [invalid token], got %v", apiErr.Errors)
-	}
+	assertAPIError(t, err, 401, []string{"invalid token"})
 }
 
 func TestGetResponse404UnparseableBodyStillSetsStatusCode(t *testing.T) {
@@ -44,19 +53,7 @@ func TestGetResponse404UnparseableBodyStillSetsStatusCode(t *testing.T) {
 	client, _ := NewClient(TokenProviderFromToken("test"))
 	_, err := client.Users.Get()
 
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-	apiErr, ok := err.(*APIError)
-	if !ok {
-		t.Fatalf("expected *APIError, got %T: %v", err, err)
-	}
-	if apiErr.StatusCode != 404 {
-		t.Errorf("expected StatusCode=404, got %d", apiErr.StatusCode)
-	}
-	if len(apiErr.Errors) != 0 {
-		t.Errorf("expected no parsed errors for unparseable body, got %v", apiErr.Errors)
-	}
+	assertAPIError(t, err, 404, nil)
 }
 
 // errReader is an io.Reader that always fails, used to simulate a body read
