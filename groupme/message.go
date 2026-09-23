@@ -113,14 +113,14 @@ func (api MessageAPI) Query(groupId string, q *MessageQuery) (*MessageIndex, err
 	if q.AfterId != nil {
 		after = "&after_id=" + *q.AfterId
 	}
-	limit := "&limit=20"
+	limit := fmt.Sprintf("&limit=%d", DEFAULT_MESSAGE_LIMIT)
 	if q.Limit != nil {
 		if *q.Limit < 0 {
 			return nil, errors.New(fmt.Sprintf("Provided limit=%d is less than 0!", *q.Limit))
-		} else if *q.Limit > 10 {
-			return nil, errors.New(fmt.Sprintf("Provided limit=%d is greater than 10!", *q.Limit))
+		} else if *q.Limit > 100 {
+			return nil, errors.New(fmt.Sprintf("Provided limit=%d is greater than 100!", *q.Limit))
 		}
-		limit = fmt.Sprintf("&limit=%d", q.Limit)
+		limit = fmt.Sprintf("&limit=%d", *q.Limit)
 	}
 	url := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/messages?%s%s%s%s", groupId, before, since, after, limit))
 	req, err := http.NewRequest(http.MethodGet, url, nil)
