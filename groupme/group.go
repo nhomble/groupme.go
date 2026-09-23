@@ -1,7 +1,6 @@
 package groupme
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -84,7 +83,7 @@ func (api GroupAPI) searchInternal(endpoint string, q *GroupQuery) ([]Group, err
 		q = &dq
 	}
 	if q.PerPage < 0 || q.PerPage > 10 {
-		return nil, errors.New(fmt.Sprintf("Invalid number of groups per page=%d", q.PerPage))
+		return nil, fmt.Errorf("Invalid number of groups per page=%d", q.PerPage)
 	}
 	values := url.Values{}
 	values.Set("page", fmt.Sprintf("%d", q.Page))
@@ -114,23 +113,18 @@ func (api GroupAPI) Find(q *GroupQuery) ([]Group, error) {
 }
 
 func (api GroupAPI) FindAll() ([]Group, error) {
-	do := true
 	groups := []Group{}
-	for i := 1; do; i += 1 {
-		q := GroupQuery{
-			Page:    i,
-			PerPage: 10,
-			Omit:    []string{"memberships"},
-		}
+	for i := 1; ; i += 1 {
+		q := DefaultGroupQuery()
+		q.Page = i
 		partial, err := api.Find(&q)
 		if err != nil {
 			return nil, err
 		}
-		if len(partial) == 0 {
-			do = false
-		}
-
 		groups = append(groups, partial...)
+		if len(partial) == 0 {
+			break
+		}
 	}
 	return groups, nil
 }

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/nhomble/groupme.go/props"
 	"os"
-	"path"
+	"path/filepath"
 )
 
 type TokenProvider interface {
@@ -47,7 +47,7 @@ func TokenProviderFromToken(t string) TokenProvider {
 
 // Create token provider from properties file
 func TokenProviderFromProperties(p ...string) (TokenProvider, error) {
-	thePath := path.Join(p...)
+	thePath := filepath.Join(p...)
 	config, err := props.View(thePath)
 	if err != nil {
 		return nil, err

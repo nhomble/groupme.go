@@ -1,7 +1,6 @@
 package groupme
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -161,9 +160,9 @@ func (api MessageAPI) buildQueryURL(groupId string, q *MessageQuery) (string, er
 	limit := DefaultMessageLimit
 	if q.Limit != nil {
 		if *q.Limit < 0 {
-			return "", errors.New(fmt.Sprintf("Provided limit=%d is less than 0!", *q.Limit))
+			return "", fmt.Errorf("Provided limit=%d is less than 0!", *q.Limit)
 		} else if *q.Limit > 100 {
-			return "", errors.New(fmt.Sprintf("Provided limit=%d is greater than 100!", *q.Limit))
+			return "", fmt.Errorf("Provided limit=%d is greater than 100!", *q.Limit)
 		}
 		limit = *q.Limit
 	}

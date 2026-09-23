@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 )
@@ -103,7 +102,7 @@ func (c *Client) do(method, path string, in, out interface{}, allowedExtraStatus
 	}
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
@@ -118,7 +117,7 @@ func (c *Client) do(method, path string, in, out interface{}, allowedExtraStatus
 	}
 
 	if out != nil {
-		return unravel(&data, out)
+		return unravel(data, out)
 	}
 	return nil
 }
