@@ -1,7 +1,6 @@
 package groupme
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -65,15 +64,12 @@ func (c *Client) getResponse(req *http.Request) ([]byte, error) {
 	defer resp.Body.Close()
 
 	data, err := ioutil.ReadAll(resp.Body)
-	if !successful(resp.StatusCode) {
-		if resp.StatusCode == 400 {
-			return nil, errors.New(parseError(&data))
-		} else {
-			return nil, errors.New("Failed to make " + req.Method + " request to url=" + req.URL.String() + " status=" + resp.Status)
-		}
-	}
 	if err != nil {
 		return nil, err
+	}
+
+	if !successful(resp.StatusCode) {
+		return nil, newAPIError(req.Method, req.URL.String(), resp.StatusCode, data)
 	}
 
 	return data, nil
@@ -107,10 +103,7 @@ func (c *Client) getResponseWithStatus(req *http.Request, allowedStatuses ...int
 		}
 	}
 
-	if resp.StatusCode == 400 {
-		return nil, resp.StatusCode, errors.New(parseError(&data))
-	}
-	return nil, resp.StatusCode, errors.New("Failed to make " + req.Method + " request to url=" + req.URL.String() + " status=" + resp.Status)
+	return nil, resp.StatusCode, newAPIError(req.Method, req.URL.String(), resp.StatusCode, data)
 }
 
 // Execute request with no expected return value
@@ -125,12 +118,12 @@ func (c *Client) execute(req *http.Request) error {
 	defer resp.Body.Close()
 
 	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
 	if !successful(resp.StatusCode) {
-		if resp.StatusCode == 400 {
-			return errors.New(parseError(&data))
-		} else {
-			return errors.New("Failed to make " + req.Method + " request to url=" + req.URL.String() + " status=" + resp.Status)
-		}
+		return newAPIError(req.Method, req.URL.String(), resp.StatusCode, data)
 	}
 	return nil
 }
