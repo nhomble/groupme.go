@@ -2,6 +2,7 @@ package groupme
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -79,7 +80,7 @@ func (api GroupAPI) searchInternal(endpoint string, q *GroupQuery) ([]Group, err
 		omit = "&omit=" + strings.Join(q.Omit, ",")
 	}
 	url := api.client.makeURL(fmt.Sprintf("/v3%s?page=%d&per_page=%d%s", endpoint, q.Page, q.PerPage, omit))
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +145,7 @@ func (api GroupAPI) FindFormer(q *GroupQuery) ([]Group, error) {
 // Get group by id
 func (api GroupAPI) Get(id string) (*Group, error) {
 	url := api.client.makeURL(fmt.Sprintf("/v3/groups/%s", id))
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +158,7 @@ func (api GroupAPI) Create(cmd *CreateGroupCommand) (*Group, error) {
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +172,7 @@ func (api GroupAPI) Update(groupId string, cmd *UpdateGroupCommand) (*Group, err
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +182,7 @@ func (api GroupAPI) Update(groupId string, cmd *UpdateGroupCommand) (*Group, err
 // Delete the group by id
 func (api GroupAPI) Delete(groupId string) error {
 	url := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/destroy", groupId))
-	req, err := http.NewRequest(http.MethodPost, url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, nil)
 	if err != nil {
 		return err
 	}
@@ -191,7 +192,7 @@ func (api GroupAPI) Delete(groupId string) error {
 // Join a group for the first time
 func (api GroupAPI) Join(groupId string, shareUrl string) (*Group, error) {
 	url := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/join/%s", groupId, shareUrl))
-	req, err := http.NewRequest(http.MethodPost, url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +210,7 @@ func (api GroupAPI) ReJoin(groupId string) (*Group, error) {
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}

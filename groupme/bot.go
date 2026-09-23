@@ -2,6 +2,7 @@ package groupme
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -70,7 +71,7 @@ func (api BotAPI) Send(cmd BotMessageCommand) error {
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}
@@ -90,7 +91,7 @@ func (api BotAPI) Create(cmd CreateBotCommand) (*BotDefitionWithGroupId, error) 
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +109,7 @@ func (api BotAPI) Create(cmd CreateBotCommand) (*BotDefitionWithGroupId, error) 
 
 func (api BotAPI) List() ([]BotDefitionWithGroupId, error) {
 	url := api.client.makeURL("/v3/bots")
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +191,7 @@ func (api BotAPI) Delete(botId string) error {
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}

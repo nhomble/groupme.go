@@ -2,6 +2,7 @@ package groupme
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -35,7 +36,7 @@ type UpdateUserCommand struct {
 func (api UserAPI) Get() (*User, error) {
 	user := User{}
 	url := api.client.makeURL("/v3/users/me")
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +58,7 @@ func (api UserAPI) Update(cmd *UpdateUserCommand) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}

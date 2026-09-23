@@ -4,9 +4,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 const AGENT = "groupme.go/api"
+
+// defaultHTTPTimeout bounds outbound requests so a stalled connection
+// cannot block a caller forever.
+const defaultHTTPTimeout = 30 * time.Second
 
 // GroupMe SDK client
 type Client struct {
@@ -22,7 +27,7 @@ type Client struct {
 // Returns a new instance to a groupme client
 //	token provider
 func NewClient(provider TokenProvider) (*Client, error) {
-	httpClient := http.DefaultClient
+	httpClient := &http.Client{Timeout: defaultHTTPTimeout}
 	c := &Client{httpClient: httpClient}
 	c.TokenProvider = &provider
 

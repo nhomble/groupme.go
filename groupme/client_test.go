@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/jarcoal/httpmock"
 )
@@ -54,6 +55,35 @@ func TestGetResponse404UnparseableBodyStillSetsStatusCode(t *testing.T) {
 	_, err := client.Users.Get()
 
 	assertAPIError(t, err, 404, nil)
+}
+
+func TestNewClientHasBoundedTimeout(t *testing.T) {
+	client, err := NewClient(TokenProviderFromToken("test"))
+	if err != nil {
+		t.Fatalf("unexpected error creating client: %v", err)
+	}
+
+	timeout := client.httpClient.Timeout
+	if timeout <= 0 {
+		t.Fatalf("expected a bounded (non-zero) timeout, got %v", timeout)
+	}
+	if timeout > time.Minute {
+		t.Errorf("expected a reasonably short timeout, got %v", timeout)
+	}
+}
+
+func TestSetHttpClientOverrideIsRespected(t *testing.T) {
+	client, err := NewClient(TokenProviderFromToken("test"))
+	if err != nil {
+		t.Fatalf("unexpected error creating client: %v", err)
+	}
+
+	custom := http.Client{Timeout: 5 * time.Second}
+	client.SetHttpClient(custom)
+
+	if client.httpClient.Timeout != 5*time.Second {
+		t.Errorf("expected custom client to be respected with Timeout=5s, got %v", client.httpClient.Timeout)
+	}
 }
 
 // errReader is an io.Reader that always fails, used to simulate a body read

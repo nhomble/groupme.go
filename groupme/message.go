@@ -2,6 +2,7 @@ package groupme
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -152,7 +153,7 @@ func (api MessageAPI) Query(groupId string, q *MessageQuery) (*MessageIndex, err
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +179,7 @@ func (api MessageAPI) queryForSearch(groupId string, q *MessageQuery) (*MessageI
 	if err != nil {
 		return nil, 0, err
 	}
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -206,7 +207,7 @@ func (api MessageAPI) Send(groupId string, cmd *SendMessageCommand) (*Message, e
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
