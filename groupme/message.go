@@ -134,7 +134,7 @@ func (api MessageAPI) buildQueryURL(groupId string, q *MessageQuery) (string, er
 	if q.AfterId != nil {
 		after = "&after_id=" + *q.AfterId
 	}
-	limit := fmt.Sprintf("&limit=%d", DEFAULT_MESSAGE_LIMIT)
+	limit := fmt.Sprintf("&limit=%d", DefaultMessageLimit)
 	if q.Limit != nil {
 		if *q.Limit < 0 {
 			return "", errors.New(fmt.Sprintf("Provided limit=%d is less than 0!", *q.Limit))

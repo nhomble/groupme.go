@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-const DEFAULT_MESSAGE_LIMIT = 20
+const DefaultMessageLimit = 20
 
 // snippet returns a truncated, human-readable representation of the raw
 // response body to help with debugging malformed API responses.
