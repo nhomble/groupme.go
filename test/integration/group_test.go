@@ -23,7 +23,7 @@ func TestFindMakeDeleteGroupt(t *testing.T) {
 	originalNumber := len(groups)
 	t.Logf("name=%s originalNumber=%d\n", name, originalNumber)
 
-	result, err := client.Groups.Create(&groupme.CreateGroupCommand{
+	result, err := client.Groups.Create(groupme.CreateGroupCommand{
 		Name:  name,
 		Share: false,
 	})

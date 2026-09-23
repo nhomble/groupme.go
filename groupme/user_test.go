@@ -12,7 +12,7 @@ import (
 
 func TestUpdateUserCommandOmitsUnsetFields(t *testing.T) {
 	name := "new-name"
-	cmd := &UpdateUserCommand{
+	cmd := UpdateUserCommand{
 		Name: &name,
 	}
 
@@ -48,7 +48,7 @@ func TestUpdateDoesNotPrintPIIToStdout(t *testing.T) {
 	name := "Test User"
 	email := "test@example.com"
 	zip := "12345"
-	cmd := &UpdateUserCommand{
+	cmd := UpdateUserCommand{
 		Name:    &name,
 		Email:   &email,
 		ZipCode: &zip,

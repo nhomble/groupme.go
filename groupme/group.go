@@ -155,7 +155,7 @@ func (api GroupAPI) Get(id string) (*Group, error) {
 	return forGroup(api.client, req)
 }
 
-func (api GroupAPI) Create(cmd *CreateGroupCommand) (*Group, error) {
+func (api GroupAPI) Create(cmd CreateGroupCommand) (*Group, error) {
 	reqURL := api.client.makeURL("/v3/groups")
 	data, err := json.Marshal(cmd)
 	if err != nil {
@@ -169,7 +169,7 @@ func (api GroupAPI) Create(cmd *CreateGroupCommand) (*Group, error) {
 }
 
 // Update a group by id
-func (api GroupAPI) Update(groupId string, cmd *UpdateGroupCommand) (*Group, error) {
+func (api GroupAPI) Update(groupId string, cmd UpdateGroupCommand) (*Group, error) {
 	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/update", url.PathEscape(groupId)))
 	data, err := json.Marshal(cmd)
 	if err != nil {

@@ -199,11 +199,11 @@ func (api MessageAPI) queryForSearch(groupId string, q *MessageQuery) (*MessageI
 }
 
 // Send a message to the group
-func (api MessageAPI) Send(groupId string, cmd *SendMessageCommand) (*Message, error) {
+func (api MessageAPI) Send(groupId string, cmd SendMessageCommand) (*Message, error) {
 	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/messages", url.PathEscape(groupId)))
 	data, err := json.Marshal(struct {
 		Message SendMessageCommand `json:"message"`
-	}{Message: *cmd})
+	}{Message: cmd})
 	if err != nil {
 		return nil, err
 	}

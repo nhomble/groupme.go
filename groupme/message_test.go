@@ -147,6 +147,32 @@ func TestQueryMessagesEscapesGroupIdAndIds(t *testing.T) {
 	}
 }
 
+func TestSendAcceptsValueConstructedCommand(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder("POST", `=~^https://api\.groupme\.com/v3/groups/groupId/messages`,
+		func(req *http.Request) (*http.Response, error) {
+			return httpmock.NewStringResponse(200, `{"response":{"message":{"id":"1","text":"hello"}}}`), nil
+		})
+
+	client, _ := NewClient(TokenProviderFromToken("test"))
+
+	// SendMessageCommand is a value type, so there is no nil-pointer panic
+	// risk when constructing and passing it directly.
+	cmd := SendMessageCommand{
+		SourceGuid: "guid-1",
+		Text:       "hello",
+	}
+	message, err := client.Messages.Send("groupId", cmd)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if message == nil || message.Text != "hello" {
+		t.Errorf("expected sent message with text 'hello', got %+v", message)
+	}
+}
+
 func TestSearchRespectsLimit(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()

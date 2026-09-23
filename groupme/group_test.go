@@ -11,7 +11,7 @@ import (
 
 func TestUpdateGroupCommandOmitsUnsetFields(t *testing.T) {
 	name := "new-name"
-	cmd := &UpdateGroupCommand{
+	cmd := UpdateGroupCommand{
 		Name: &name,
 	}
 

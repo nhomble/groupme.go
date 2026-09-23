@@ -29,7 +29,7 @@ func TestUpdateName(t *testing.T) {
 		newName = RandomName()
 	}
 
-	update := &groupme.UpdateUserCommand{
+	update := groupme.UpdateUserCommand{
 		Name:  &newName,
 		Email: &user.Email,
 	}

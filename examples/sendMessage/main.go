@@ -24,7 +24,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	group, err := client.Groups.Create(&groupme.CreateGroupCommand{
+	group, err := client.Groups.Create(groupme.CreateGroupCommand{
 		Name:  "hombro-test",
 		Share: false,
 	})
@@ -32,7 +32,7 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Printf("Group created id=%s name=%s\n", group.Id, group.Name)
-	_, err = client.Messages.Send(group.Id, &groupme.SendMessageCommand{
+	_, err = client.Messages.Send(group.Id, groupme.SendMessageCommand{
 		SourceGuid: fmt.Sprintf("%d%d", rand.Int63(), rand.Int63()),
 		Text:       "Message sent!",
 	})

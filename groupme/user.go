@@ -52,7 +52,7 @@ func (api UserAPI) Get() (*User, error) {
 }
 
 // Update users information on GroupMe
-func (api UserAPI) Update(cmd *UpdateUserCommand) (*User, error) {
+func (api UserAPI) Update(cmd UpdateUserCommand) (*User, error) {
 	url := api.client.makeURL("/v3/users/update")
 	data, err := json.Marshal(cmd)
 	if err != nil {
