@@ -72,14 +72,14 @@ func TestNewClientHasBoundedTimeout(t *testing.T) {
 	}
 }
 
-func TestSetHttpClientOverrideIsRespected(t *testing.T) {
+func TestSetHTTPClientOverrideIsRespected(t *testing.T) {
 	client, err := NewClient(TokenProviderFromToken("test"))
 	if err != nil {
 		t.Fatalf("unexpected error creating client: %v", err)
 	}
 
-	custom := http.Client{Timeout: 5 * time.Second}
-	client.SetHttpClient(custom)
+	custom := &http.Client{Timeout: 5 * time.Second}
+	client.SetHTTPClient(custom)
 
 	if client.httpClient.Timeout != 5*time.Second {
 		t.Errorf("expected custom client to be respected with Timeout=5s, got %v", client.httpClient.Timeout)

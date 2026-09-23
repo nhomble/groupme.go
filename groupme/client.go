@@ -42,8 +42,8 @@ func NewClient(provider TokenProvider) (*Client, error) {
 }
 
 // Set your own http.Client and fluently return the Client
-func (c *Client) SetHttpClient(client http.Client) *Client {
-	c.httpClient = &client
+func (c *Client) SetHTTPClient(client *http.Client) *Client {
+	c.httpClient = client
 	return c
 }
 
