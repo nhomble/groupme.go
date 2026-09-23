@@ -11,7 +11,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	provider, err := groupme.TokenPoviderFromProperties(home, ".groupme-api", "prop.txt")
+	provider, err := groupme.TokenProviderFromProperties(home, ".groupme-api", "prop.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -26,6 +26,6 @@ func main() {
 	}
 
 	for _, group := range groups {
-		log.Printf("Name=%s Id=%s\n", group.Name, group.Id)
+		log.Printf("Name=%s ID=%s\n", group.Name, group.ID)
 	}
 }

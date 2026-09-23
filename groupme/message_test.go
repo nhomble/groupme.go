@@ -119,7 +119,7 @@ func TestQueryMessagesQueryStringWellFormed(t *testing.T) {
 	}
 }
 
-func TestQueryMessagesEscapesGroupIdAndIds(t *testing.T) {
+func TestQueryMessagesEscapesGroupIDAndIDs(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 

@@ -14,9 +14,9 @@ type UserAPI struct {
 
 // GroupMe User Entity
 type User struct {
-	Id          string `json:"id"`
+	ID          string `json:"id"`
 	PhoneNumber string `json:"phone_number"`
-	ImageUrl    string `json:"image_url"`
+	ImageURL    string `json:"image_url"`
 	Name        string `json:"name"`
 	CreatedAt   int64  `json:"created_at"`
 	UpdatedAt   int64  `json:"updated_at"`
@@ -26,7 +26,7 @@ type User struct {
 
 // GroupeMe Update User Payload
 type UpdateUserCommand struct {
-	AvatarUrl *string `json:"avatar_url,omitempty"`
+	AvatarURL *string `json:"avatar_url,omitempty"`
 	Name      *string `json:"name,omitempty"`
 	Email     *string `json:"email,omitempty"`
 	ZipCode   *string `json:"zip_code,omitempty"`

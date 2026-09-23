@@ -22,7 +22,7 @@ func TestView_StripsDoubleQuotes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if got := (*props)["token"]; got != "abc123" {
+	if got := props["token"]; got != "abc123" {
 		t.Errorf("expected token=abc123, got %q", got)
 	}
 }
@@ -33,7 +33,7 @@ func TestView_TrimsWhitespace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if got := (*props)["token"]; got != "abc123" {
+	if got := props["token"]; got != "abc123" {
 		t.Errorf("expected token=abc123, got %q", got)
 	}
 }
@@ -44,10 +44,10 @@ func TestView_SkipsBlankAndCommentLines(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if len(*props) != 1 {
-		t.Fatalf("expected 1 prop, got %d: %v", len(*props), *props)
+	if len(props) != 1 {
+		t.Fatalf("expected 1 prop, got %d: %v", len(props), props)
 	}
-	if got := (*props)["token"]; got != "abc123" {
+	if got := props["token"]; got != "abc123" {
 		t.Errorf("expected token=abc123, got %q", got)
 	}
 }
@@ -58,7 +58,7 @@ func TestView_UnquotedKeyValue(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if got := (*props)["token"]; got != "abc123" {
+	if got := props["token"]; got != "abc123" {
 		t.Errorf("expected token=abc123, got %q", got)
 	}
 }

@@ -35,7 +35,7 @@ func TestUpdateGroupCommandOmitsUnsetFields(t *testing.T) {
 	}
 }
 
-func TestJoinEscapesShareUrlAndGroupId(t *testing.T) {
+func TestJoinEscapesShareURLAndGroupID(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 

@@ -16,7 +16,7 @@ func TestFindMakeDeleteGroupt(t *testing.T) {
 	for _, g := range groups {
 		if g.Name == name {
 			t.Logf("Delete from previous test %v\n", g)
-			client.Groups.Delete(g.Id)
+			client.Groups.Delete(g.ID)
 		}
 	}
 
@@ -47,10 +47,10 @@ func TestFindMakeDeleteGroupt(t *testing.T) {
 		t.Error(err)
 	}
 	for i, g := range groups {
-		t.Logf("%d> id=%s %s\n", i, g.Id, g.Name)
+		t.Logf("%d> id=%s %s\n", i, g.ID, g.Name)
 	}
 
-	err = client.Groups.Delete(result.Id)
+	err = client.Groups.Delete(result.ID)
 	if err != nil {
 		t.Error(err)
 	}
@@ -67,6 +67,6 @@ func TestFindMakeDeleteGroupt(t *testing.T) {
 		t.Error(err)
 	}
 	for i, g := range groups {
-		t.Logf("%d> id=%s name=%s\n", i, g.Id, g.Name)
+		t.Logf("%d> id=%s name=%s\n", i, g.ID, g.Name)
 	}
 }

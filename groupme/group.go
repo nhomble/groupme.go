@@ -17,30 +17,30 @@ type GroupAPI struct {
 }
 
 type Member struct {
-	UserId   string `json:"user_id"`
+	UserID   string `json:"user_id"`
 	Nickname string `json:"nickname"`
 	Muted    bool   `json:"muted"`
-	ImageUrl string `json:"image_url"`
+	ImageURL string `json:"image_url"`
 }
 
 type GroupMessages struct {
 	Count                int            `json:"count"`
-	LastMessageId        string         `json:"last_message_id"`
+	LastMessageID        string         `json:"last_message_id"`
 	LastMessageCreatedAt int64          `json:"last_message_created_at"`
 	Preview              PreviewMessage `json:"preview"`
 }
 
 type Group struct {
-	Id            string        `json:"id"`
+	ID            string        `json:"id"`
 	Name          string        `json:"name"`
 	Type          string        `json:"type"`
 	Description   string        `json:"description"`
-	ImageUrl      string        `json:"image_url"`
-	CreatorUserId string        `json:"creator_user_id"`
+	ImageURL      string        `json:"image_url"`
+	CreatorUserID string        `json:"creator_user_id"`
 	CreatedAt     int64         `json:"created_at"`
 	UpdatedAt     int64         `json:"updated_at"`
 	Members       []Member      `json:"members"`
-	ShareUrl      string        `json:"share_url"`
+	ShareURL      string        `json:"share_url"`
 	Messages      GroupMessages `json:"messages"`
 }
 
@@ -53,14 +53,14 @@ type GroupQuery struct {
 type CreateGroupCommand struct {
 	Name     string  `json:"name"`
 	Share    bool    `json:"share"`
-	ImageUrl *string `json:"image_url,omitempty"`
+	ImageURL *string `json:"image_url,omitempty"`
 }
 
 type UpdateGroupCommand struct {
 	Name       *string `json:"name,omitempty"`
 	Share      *bool   `json:"share,omitempty"`
 	OfficeMode *bool   `json:"office_mode,omitempty"`
-	ImageUrl   *string `json:"image_url,omitempty"`
+	ImageURL   *string `json:"image_url,omitempty"`
 }
 
 var DefaultGroupQuery GroupQuery = GroupQuery{
@@ -206,9 +206,9 @@ func (api GroupAPI) Join(groupId string, shareUrl string) (*Group, error) {
 func (api GroupAPI) ReJoin(groupId string) (*Group, error) {
 	reqURL := api.client.makeURL("/v3/groups/join")
 	data, err := json.Marshal(struct {
-		Id string `json:"group_id"`
+		ID string `json:"group_id"`
 	}{
-		Id: groupId,
+		ID: groupId,
 	})
 	if err != nil {
 		return nil, err

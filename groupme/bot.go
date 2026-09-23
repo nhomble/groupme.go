@@ -27,7 +27,7 @@ type BotMessageCommand struct {
 // Request body to create a bot
 type CreateBotCommand struct {
 	Name         string  `json:"name"`
-	GroupId      string  `json:"group_id"`
+	GroupID      string  `json:"group_id"`
 	AvatarURL    *string `json:"avatar_url,omitempty"`
 	CallbackURL  *string `json:"callback_url,omitempty"`
 	Notification *bool   `json:"dm_notification,omitempty"`
@@ -36,7 +36,7 @@ type CreateBotCommand struct {
 // Request body to update a bot
 type UpdateBotCommand struct {
 	Name         string  `json:"name"`
-	GroupId      string  `json:"group_id"`
+	GroupID      string  `json:"group_id"`
 	AvatarURL    *string `json:"avatar_url,omitempty"`
 	CallbackURL  *string `json:"callback_url,omitempty"`
 	Notification *bool   `json:"dm_notification,omitempty"`
@@ -47,21 +47,21 @@ type createBotCommandRequest struct {
 }
 
 // Bot data model in GroupMe
-type BotDefitionWithGroupId struct {
+type BotDefinitionForGroup struct {
 	Name          string  `json:"name"`
-	GroupId       string  `json:"group_id"`
-	AvatarUrl     *string `json:"avatar_url"`
-	CallbackUrl   *string `json:"callback_url"`
+	GroupID       string  `json:"group_id"`
+	AvatarURL     *string `json:"avatar_url"`
+	CallbackURL   *string `json:"callback_url"`
 	Notifications bool    `json:"dm_notification"`
-	BotId         string  `json:"bot_id"`
+	BotID         string  `json:"bot_id"`
 }
 
 type bot struct {
-	Bot BotDefitionWithGroupId `json:"bot"`
+	Bot BotDefinitionForGroup `json:"bot"`
 }
 
 type deleteBotCommand struct {
-	BotId string `json:"bot_id"`
+	BotID string `json:"bot_id"`
 }
 
 // Send message from bot
@@ -82,7 +82,7 @@ func (api BotAPI) Send(cmd BotMessageCommand) error {
 	return nil
 }
 
-func (api BotAPI) Create(cmd CreateBotCommand) (*BotDefitionWithGroupId, error) {
+func (api BotAPI) Create(cmd CreateBotCommand) (*BotDefinitionForGroup, error) {
 	url := api.client.makeURL("/v3/bots")
 	envelope := createBotCommandRequest{
 		Bot: cmd,
@@ -95,19 +95,19 @@ func (api BotAPI) Create(cmd CreateBotCommand) (*BotDefitionWithGroupId, error) 
 	if err != nil {
 		return nil, err
 	}
-	bot := bot{}
+	env := bot{}
 	data, err = api.client.getResponse(req)
 	if err != nil {
 		return nil, err
 	}
-	err = unravel(&data, &bot)
+	err = unravel(&data, &env)
 	if err != nil {
 		return nil, err
 	}
-	return &bot.Bot, nil
+	return &env.Bot, nil
 }
 
-func (api BotAPI) List() ([]BotDefitionWithGroupId, error) {
+func (api BotAPI) List() ([]BotDefinitionForGroup, error) {
 	url := api.client.makeURL("/v3/bots")
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
@@ -117,7 +117,7 @@ func (api BotAPI) List() ([]BotDefitionWithGroupId, error) {
 	if err != nil {
 		return nil, err
 	}
-	var bots []BotDefitionWithGroupId
+	var bots []BotDefinitionForGroup
 	err = unravel(&data, &bots)
 	if err != nil {
 		return nil, err
@@ -125,14 +125,14 @@ func (api BotAPI) List() ([]BotDefitionWithGroupId, error) {
 	return bots, nil
 }
 
-func (api BotAPI) Get(botId string) (*BotDefitionWithGroupId, error) {
+func (api BotAPI) Get(botId string) (*BotDefinitionForGroup, error) {
 	bots, err := api.List()
 	if err != nil {
 		return nil, err
 	}
-	for _, bot := range bots {
-		if bot.BotId == botId {
-			return &bot, nil
+	for _, b := range bots {
+		if b.BotID == botId {
+			return &b, nil
 		}
 	}
 	return nil, ErrBotNotFound
@@ -143,13 +143,13 @@ func (api BotAPI) Get(botId string) (*BotDefitionWithGroupId, error) {
 // desired fields (falling back to the existing bot's fields for anything not
 // explicitly overridden by command), and only once that succeeds is the old
 // bot deleted. This avoids leaving the caller with no bot at all if Create
-// fails, but it means the returned bot has a NEW BotId distinct from botId.
+// fails, but it means the returned bot has a NEW BotID distinct from botId.
 // Callers must update any stored bot ID and re-register webhooks/callback
 // URLs (and any other GroupMe-side configuration keyed on the bot ID) after
 // calling this.
 //
 // hack api until I figure out a better approach with GroupMe apis. Nothing in public docs
-func (api BotAPI) Update(botId string, command UpdateBotCommand) (*BotDefitionWithGroupId, error) {
+func (api BotAPI) Update(botId string, command UpdateBotCommand) (*BotDefinitionForGroup, error) {
 	old, err := api.Get(botId)
 	if err != nil {
 		return nil, err
@@ -160,10 +160,10 @@ func (api BotAPI) Update(botId string, command UpdateBotCommand) (*BotDefitionWi
 
 	createCmd := CreateBotCommand(command)
 	if createCmd.AvatarURL == nil {
-		createCmd.AvatarURL = old.AvatarUrl
+		createCmd.AvatarURL = old.AvatarURL
 	}
 	if createCmd.CallbackURL == nil {
-		createCmd.CallbackURL = old.CallbackUrl
+		createCmd.CallbackURL = old.CallbackURL
 	}
 	if createCmd.Notification == nil {
 		oldNotification := old.Notifications
@@ -186,7 +186,7 @@ func (api BotAPI) Update(botId string, command UpdateBotCommand) (*BotDefitionWi
 func (api BotAPI) Delete(botId string) error {
 	url := api.client.makeURL("/v3/bots/destroy")
 	data, err := json.Marshal(deleteBotCommand{
-		BotId: botId,
+		BotID: botId,
 	})
 	if err != nil {
 		return err

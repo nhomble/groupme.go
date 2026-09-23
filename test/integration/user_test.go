@@ -13,8 +13,8 @@ func TestGetUser(t *testing.T) {
 		t.Fatal(err)
 	}
 	expected := "23807192"
-	if user.Id != expected {
-		t.Errorf("User.Id | %s!=%s", expected, user.Id)
+	if user.ID != expected {
+		t.Errorf("User.ID | %s!=%s", expected, user.ID)
 	}
 }
 

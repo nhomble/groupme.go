@@ -24,13 +24,13 @@ type Attachment struct {
 }
 
 type Message struct {
-	Id          string       `json:"id"`
+	ID          string       `json:"id"`
 	SourceGuid  string       `json:"source_guid"`
 	CreatedAt   int64        `json:"created_at"`
-	UserId      string       `json:"user_id"`
-	GroupId     string       `json:"group_id"`
+	UserID      string       `json:"user_id"`
+	GroupID     string       `json:"group_id"`
 	Name        string       `json:"name"`
-	AvatarUrl   string       `json:"avatar_url"`
+	AvatarURL   string       `json:"avatar_url"`
 	Text        string       `json:"text"`
 	System      bool         `json:"system"`
 	FavoritedBy []string     `json:"favorited_by"`
@@ -113,7 +113,7 @@ func (api MessageAPI) Search(groupId string, search MessageSearch) (*MessageInde
 			}
 			seen += 1
 		}
-		lastId = &resp.Messages[len(resp.Messages)-1].Id
+		lastId = &resp.Messages[len(resp.Messages)-1].ID
 	}
 
 	return &MessageIndex{Count: count, Messages: ret}, nil

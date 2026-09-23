@@ -9,7 +9,7 @@ import (
 type GroupmeProps map[string]string
 
 // View properties in map
-func View(propLocation string) (*GroupmeProps, error) {
+func View(propLocation string) (GroupmeProps, error) {
 	f, err := os.Open(propLocation)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func View(propLocation string) (*GroupmeProps, error) {
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
-	return &props, nil
+	return props, nil
 }
 
 // unquote strips a single layer of surrounding matching quotes (' or ") from

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const AGENT = "groupme.go/api"
+const UserAgent = "groupme.go/api"
 
 // defaultHTTPTimeout bounds outbound requests so a stalled connection
 // cannot block a caller forever.
@@ -17,7 +17,7 @@ const defaultHTTPTimeout = 30 * time.Second
 type Client struct {
 	httpClient    *http.Client
 	host          string
-	TokenProvider *TokenProvider
+	TokenProvider TokenProvider
 	Users         *UserAPI
 	Groups        *GroupAPI
 	Messages      *MessageAPI
@@ -33,7 +33,7 @@ func NewClient(provider TokenProvider) (*Client, error) {
 
 	httpClient := &http.Client{Timeout: defaultHTTPTimeout}
 	c := &Client{httpClient: httpClient}
-	c.TokenProvider = &provider
+	c.TokenProvider = provider
 
 	// apis
 	c.Users = &UserAPI{client: c}
@@ -63,11 +63,11 @@ func successful(code int) bool {
 
 // Common request function
 func (c *Client) getResponse(req *http.Request) ([]byte, error) {
-	token, err := (*c.TokenProvider).Get()
+	token, err := c.TokenProvider.Get()
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", AGENT)
+	req.Header.Set("User-Agent", UserAgent)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Access-Token", token)
 	resp, err := c.httpClient.Do(req)
@@ -92,11 +92,11 @@ func (c *Client) getResponse(req *http.Request) ([]byte, error) {
 // HTTP status code, and treats any status listed in allowedStatuses as a
 // non-error response (its body, if any, is returned as-is).
 func (c *Client) getResponseWithStatus(req *http.Request, allowedStatuses ...int) ([]byte, int, error) {
-	token, err := (*c.TokenProvider).Get()
+	token, err := c.TokenProvider.Get()
 	if err != nil {
 		return nil, 0, err
 	}
-	req.Header.Set("User-Agent", AGENT)
+	req.Header.Set("User-Agent", UserAgent)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Access-Token", token)
 	resp, err := c.httpClient.Do(req)
@@ -125,11 +125,11 @@ func (c *Client) getResponseWithStatus(req *http.Request, allowedStatuses ...int
 
 // Execute request with no expected return value
 func (c *Client) execute(req *http.Request) error {
-	token, err := (*c.TokenProvider).Get()
+	token, err := c.TokenProvider.Get()
 	if err != nil {
 		return err
 	}
-	req.Header.Set("User-Agent", AGENT)
+	req.Header.Set("User-Agent", UserAgent)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Access-Token", token)
 	resp, err := c.httpClient.Do(req)

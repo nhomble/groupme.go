@@ -46,11 +46,11 @@ func TokenProviderFromToken(t string) TokenProvider {
 }
 
 // Create token provider from properties file
-func TokenPoviderFromProperties(p ...string) (TokenProvider, error) {
+func TokenProviderFromProperties(p ...string) (TokenProvider, error) {
 	thePath := path.Join(p...)
 	config, err := props.View(thePath)
 	if err != nil {
 		return nil, err
 	}
-	return SimpleTokenProvider{token: (*config)["token"]}, nil
+	return SimpleTokenProvider{token: config["token"]}, nil
 }

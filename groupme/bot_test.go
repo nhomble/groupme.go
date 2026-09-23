@@ -94,13 +94,13 @@ func TestUpdatePreservesUnspecifiedFields(t *testing.T) {
 	client, _ := NewClient(TokenProviderFromToken("test"))
 	newBot, err := client.Bots.Update("old-bot", UpdateBotCommand{
 		Name:    "NewName",
-		GroupId: "group-1",
+		GroupID: "group-1",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if newBot.BotId != "new-bot" {
-		t.Errorf("expected new bot id, got %s", newBot.BotId)
+	if newBot.BotID != "new-bot" {
+		t.Errorf("expected new bot id, got %s", newBot.BotID)
 	}
 
 	if createBody.Bot.AvatarURL == nil || *createBody.Bot.AvatarURL != "http://example.com/avatar.png" {
@@ -134,7 +134,7 @@ func TestUpdateCreatesBeforeDeleting(t *testing.T) {
 	client, _ := NewClient(TokenProviderFromToken("test"))
 	_, err := client.Bots.Update("old-bot", UpdateBotCommand{
 		Name:    "NewName",
-		GroupId: "group-1",
+		GroupID: "group-1",
 	})
 
 	if err == nil {
