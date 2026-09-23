@@ -3,6 +3,7 @@ package groupme
 import (
 	"encoding/json"
 	"io"
+	"net/http"
 	"os"
 	"strings"
 	"testing"
@@ -33,6 +34,34 @@ func TestUpdateUserCommandOmitsUnsetFields(t *testing.T) {
 	}
 	if strings.Contains(marshaled, `"avatar_url"`) {
 		t.Errorf("expected marshaled command to omit avatar_url, got %s", marshaled)
+	}
+}
+
+func TestGetUser(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedMethod, capturedPath string
+	httpmock.RegisterResponder("GET", "https://api.groupme.com/v3/users/me",
+		func(req *http.Request) (*http.Response, error) {
+			capturedMethod = req.Method
+			capturedPath = req.URL.Path
+			return httpmock.NewStringResponse(200, `{"response":{"id":"1","name":"Test User","email":"test@example.com"}}`), nil
+		})
+
+	client, _ := NewClient(TokenProviderFromToken("test"))
+	user, err := client.Users.Get()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedMethod != "GET" {
+		t.Errorf("expected GET, got %s", capturedMethod)
+	}
+	if capturedPath != "/v3/users/me" {
+		t.Errorf("expected path /v3/users/me, got %s", capturedPath)
+	}
+	if user == nil || user.ID != "1" || user.Name != "Test User" {
+		t.Errorf("unexpected user result: %+v", user)
 	}
 }
 

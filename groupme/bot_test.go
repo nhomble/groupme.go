@@ -64,6 +64,111 @@ func TestGetBotNotFound(t *testing.T) {
 	}
 }
 
+func TestListBots(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedMethod, capturedPath string
+	httpmock.RegisterResponder("GET", "https://api.groupme.com/v3/bots",
+		func(req *http.Request) (*http.Response, error) {
+			capturedMethod = req.Method
+			capturedPath = req.URL.Path
+			return httpmock.NewStringResponse(200, `{"response":[{"bot_id":"bot-1","name":"Bot One"},{"bot_id":"bot-2","name":"Bot Two"}]}`), nil
+		})
+
+	client, _ := NewClient(TokenProviderFromToken("test"))
+	bots, err := client.Bots.List()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedMethod != "GET" {
+		t.Errorf("expected GET, got %s", capturedMethod)
+	}
+	if capturedPath != "/v3/bots" {
+		t.Errorf("expected path /v3/bots, got %s", capturedPath)
+	}
+	if len(bots) != 2 || bots[0].BotID != "bot-1" || bots[1].BotID != "bot-2" {
+		t.Errorf("unexpected bots result: %+v", bots)
+	}
+}
+
+func TestListBotsAPIError(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder("GET", "https://api.groupme.com/v3/bots",
+		httpmock.NewStringResponder(500, `{"meta":{"errors":["boom"]}}`))
+
+	client, _ := NewClient(TokenProviderFromToken("test"))
+	bots, err := client.Bots.List()
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if bots != nil {
+		t.Errorf("expected nil bots on error, got %v", bots)
+	}
+	apiErr, ok := err.(*APIError)
+	if !ok {
+		t.Fatalf("expected *APIError, got %T: %v", err, err)
+	}
+	if apiErr.StatusCode != 500 {
+		t.Errorf("expected StatusCode=500, got %d", apiErr.StatusCode)
+	}
+}
+
+func TestDeleteBot(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedMethod, capturedPath string
+	var capturedBody deleteBotCommand
+	httpmock.RegisterResponder("POST", "https://api.groupme.com/v3/bots/destroy",
+		func(req *http.Request) (*http.Response, error) {
+			capturedMethod = req.Method
+			capturedPath = req.URL.Path
+			data, _ := io.ReadAll(req.Body)
+			if err := json.Unmarshal(data, &capturedBody); err != nil {
+				t.Fatalf("failed to unmarshal delete body: %v", err)
+			}
+			return httpmock.NewStringResponse(200, `{}`), nil
+		})
+
+	client, _ := NewClient(TokenProviderFromToken("test"))
+	if err := client.Bots.Delete("bot-1"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if capturedMethod != "POST" {
+		t.Errorf("expected POST, got %s", capturedMethod)
+	}
+	if capturedPath != "/v3/bots/destroy" {
+		t.Errorf("expected path /v3/bots/destroy, got %s", capturedPath)
+	}
+	if capturedBody.BotID != "bot-1" {
+		t.Errorf("expected bot_id=bot-1 in body, got %q", capturedBody.BotID)
+	}
+}
+
+func TestDeleteBotAPIError(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder("POST", "https://api.groupme.com/v3/bots/destroy",
+		httpmock.NewStringResponder(404, `{"meta":{"errors":["not found"]}}`))
+
+	client, _ := NewClient(TokenProviderFromToken("test"))
+	err := client.Bots.Delete("bot-1")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	apiErr, ok := err.(*APIError)
+	if !ok {
+		t.Fatalf("expected *APIError, got %T: %v", err, err)
+	}
+	if apiErr.StatusCode != 404 {
+		t.Errorf("expected StatusCode=404, got %d", apiErr.StatusCode)
+	}
+}
+
 func TestUpdatePreservesUnspecifiedFields(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
