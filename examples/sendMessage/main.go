@@ -6,16 +6,14 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"time"
 )
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
 	home, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatal(err)
 	}
-	provider, err := groupme.TokenProviderFromProperties(home + "/.groupme-go.prop")
+	provider, err := groupme.TokenProviderFromProperties(home, ".groupme-api", "prop.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
