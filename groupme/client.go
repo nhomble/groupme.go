@@ -1,7 +1,11 @@
 package groupme
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -61,70 +65,30 @@ func successful(code int) bool {
 	return code < 300 && code >= 200
 }
 
-// Common request function
-func (c *Client) getResponse(req *http.Request) ([]byte, error) {
-	token, err := c.TokenProvider.Get()
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("User-Agent", UserAgent)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Access-Token", token)
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if !successful(resp.StatusCode) {
-		return nil, newAPIError(req.Method, req.URL.String(), resp.StatusCode, data)
-	}
-
-	return data, nil
-}
-
-// getResponseWithStatus behaves like getResponse but also returns the raw
-// HTTP status code, and treats any status listed in allowedStatuses as a
-// non-error response (its body, if any, is returned as-is).
-func (c *Client) getResponseWithStatus(req *http.Request, allowedStatuses ...int) ([]byte, int, error) {
-	token, err := c.TokenProvider.Get()
-	if err != nil {
-		return nil, 0, err
-	}
-	req.Header.Set("User-Agent", UserAgent)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Access-Token", token)
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, 0, err
-	}
-	defer resp.Body.Close()
-
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, resp.StatusCode, err
-	}
-
-	if successful(resp.StatusCode) {
-		return data, resp.StatusCode, nil
-	}
-
-	for _, s := range allowedStatuses {
-		if resp.StatusCode == s {
-			return data, resp.StatusCode, nil
+// do builds and executes an HTTP request against the GroupMe API, and is the
+// single consolidated entry point used by every API method.
+//
+// When in is non-nil, it is marshaled to JSON and sent as the request body;
+// GET/DELETE-style calls with no body should pass nil. When the response is
+// successful (2xx, or a status listed in allowedExtraStatuses) and out is
+// non-nil, the response body is unraveled into out. Any status not in the
+// 2xx range and not listed in allowedExtraStatuses results in a typed
+// *APIError.
+func (c *Client) do(method, path string, in, out interface{}, allowedExtraStatuses ...int) error {
+	var body io.Reader
+	if in != nil {
+		data, err := json.Marshal(in)
+		if err != nil {
+			return err
 		}
+		body = bytes.NewBuffer(data)
 	}
 
-	return nil, resp.StatusCode, newAPIError(req.Method, req.URL.String(), resp.StatusCode, data)
-}
+	req, err := http.NewRequestWithContext(context.Background(), method, c.makeURL(path), body)
+	if err != nil {
+		return err
+	}
 
-// Execute request with no expected return value
-func (c *Client) execute(req *http.Request) error {
 	token, err := c.TokenProvider.Get()
 	if err != nil {
 		return err
@@ -132,6 +96,7 @@ func (c *Client) execute(req *http.Request) error {
 	req.Header.Set("User-Agent", UserAgent)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Access-Token", token)
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
@@ -144,7 +109,16 @@ func (c *Client) execute(req *http.Request) error {
 	}
 
 	if !successful(resp.StatusCode) {
+		for _, s := range allowedExtraStatuses {
+			if resp.StatusCode == s {
+				return nil
+			}
+		}
 		return newAPIError(req.Method, req.URL.String(), resp.StatusCode, data)
+	}
+
+	if out != nil {
+		return unravel(&data, out)
 	}
 	return nil
 }

@@ -1,9 +1,6 @@
 package groupme
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -95,32 +92,17 @@ func (api GroupAPI) searchInternal(endpoint string, q *GroupQuery) ([]Group, err
 	if len(q.Omit) > 0 {
 		values.Set("omit", strings.Join(q.Omit, ","))
 	}
-	reqURL := api.client.makeURL(fmt.Sprintf("/v3%s?%s", endpoint, values.Encode()))
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, reqURL, nil)
-	if err != nil {
-		return nil, err
-	}
-	data, err := api.client.getResponse(req)
-
-	if err != nil {
-		return nil, err
-	}
+	path := fmt.Sprintf("/v3%s?%s", endpoint, values.Encode())
 	var groups []Group
-	err = unravel(&data, &groups)
-	if err != nil {
+	if err := api.client.do(http.MethodGet, path, nil, &groups); err != nil {
 		return nil, err
 	}
 	return groups, nil
 }
 
-func forGroup(client *Client, req *http.Request) (*Group, error) {
+func forGroup(client *Client, method, path string, in interface{}) (*Group, error) {
 	group := Group{}
-	data, err := client.getResponse(req)
-	if err != nil {
-		return nil, err
-	}
-	err = unravel(&data, &group)
-	if err != nil {
+	if err := client.do(method, path, in, &group); err != nil {
 		return nil, err
 	}
 	return &group, nil
@@ -160,77 +142,36 @@ func (api GroupAPI) FindFormer(q *GroupQuery) ([]Group, error) {
 
 // Get group by id
 func (api GroupAPI) Get(id string) (*Group, error) {
-	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s", url.PathEscape(id)))
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, reqURL, nil)
-	if err != nil {
-		return nil, err
-	}
-	return forGroup(api.client, req)
+	return forGroup(api.client, http.MethodGet, fmt.Sprintf("/v3/groups/%s", url.PathEscape(id)), nil)
 }
 
 func (api GroupAPI) Create(cmd CreateGroupCommand) (*Group, error) {
-	reqURL := api.client.makeURL("/v3/groups")
-	data, err := json.Marshal(cmd)
-	if err != nil {
-		return nil, err
-	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, bytes.NewBuffer(data))
-	if err != nil {
-		return nil, err
-	}
-	return forGroup(api.client, req)
+	return forGroup(api.client, http.MethodPost, "/v3/groups", cmd)
 }
 
 // Update a group by id
 func (api GroupAPI) Update(groupId string, cmd UpdateGroupCommand) (*Group, error) {
-	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/update", url.PathEscape(groupId)))
-	data, err := json.Marshal(cmd)
-	if err != nil {
-		return nil, err
-	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, bytes.NewBuffer(data))
-	if err != nil {
-		return nil, err
-	}
-	return forGroup(api.client, req)
+	return forGroup(api.client, http.MethodPost, fmt.Sprintf("/v3/groups/%s/update", url.PathEscape(groupId)), cmd)
 }
 
 // Delete the group by id
 func (api GroupAPI) Delete(groupId string) error {
-	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/destroy", url.PathEscape(groupId)))
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, nil)
-	if err != nil {
-		return err
-	}
-	return api.client.execute(req)
+	return api.client.do(http.MethodPost, fmt.Sprintf("/v3/groups/%s/destroy", url.PathEscape(groupId)), nil, nil)
 }
 
 // Join a group for the first time
 func (api GroupAPI) Join(groupId string, shareUrl string) (*Group, error) {
-	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/join/%s", url.PathEscape(groupId), url.PathEscape(shareUrl)))
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, nil)
-	if err != nil {
-		return nil, err
-	}
-	return forGroup(api.client, req)
+	return forGroup(api.client, http.MethodPost, fmt.Sprintf("/v3/groups/%s/join/%s", url.PathEscape(groupId), url.PathEscape(shareUrl)), nil)
 }
 
 // Rejoin a group this user had previously joined
 func (api GroupAPI) ReJoin(groupId string) (*Group, error) {
-	reqURL := api.client.makeURL("/v3/groups/join")
-	data, err := json.Marshal(struct {
+	cmd := struct {
 		ID string `json:"group_id"`
 	}{
 		ID: groupId,
-	})
-	if err != nil {
-		return nil, err
 	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, bytes.NewBuffer(data))
-	if err != nil {
-		return nil, err
-	}
-	return forGroup(api.client, req)
+	return forGroup(api.client, http.MethodPost, "/v3/groups/join", cmd)
 }
 
 // Parse the time since epoch time from groupme
