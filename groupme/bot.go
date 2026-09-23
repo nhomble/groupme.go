@@ -3,9 +3,13 @@ package groupme
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 )
+
+// ErrBotNotFound is returned when no bot matches the given ID
+var ErrBotNotFound = errors.New("bot not found")
 
 // Client api responsible for all bot functionality
 type BotAPI struct {
@@ -128,7 +132,7 @@ func (api BotAPI) Get(botId string) (*BotDefitionWithGroupId, error) {
 			return &bot, nil
 		}
 	}
-	return nil, nil
+	return nil, ErrBotNotFound
 }
 
 // hack api until I figure out a better approach with GroupMe apis. Nothing in public docs

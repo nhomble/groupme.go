@@ -12,7 +12,8 @@ func main() {
 	client, err := groupme.NewClient(provider)
 	must(err)
 
-	list, _ := client.Bots.List()
+	list, err := client.Bots.List()
+	must(err)
 	for _, b := range list {
 		fmt.Printf("%s %s %s\n", b.Name, b.BotId, b.GroupId)
 	}
@@ -27,13 +28,15 @@ func main() {
 	})
 	must(err)
 
-	bot2, _ := client.Bots.Get((*bot).BotId)
-	client.Bots.Update(bot2.BotId, groupme.UpdateBotCommand{
+	bot2, err := client.Bots.Get(bot.BotId)
+	must(err)
+	_, err = client.Bots.Update(bot2.BotId, groupme.UpdateBotCommand{
 		Name:        "test2",
 		GroupId:     "11617071",
 		AvatarURL:   &avatarURL,
 		CallbackURL: &callBackURL,
 	})
+	must(err)
 }
 
 func must(err error) {
