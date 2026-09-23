@@ -84,3 +84,19 @@ func TestGetGroupEscapesId(t *testing.T) {
 		t.Errorf("expected escaped path %q, got %q", expected, capturedPath)
 	}
 }
+
+func TestDefaultGroupQueryReturnsIndependentCopies(t *testing.T) {
+	first := DefaultGroupQuery()
+	first.Page = 999
+	first.Omit = append(first.Omit, "mutated")
+
+	second := DefaultGroupQuery()
+	if second.Page == 999 {
+		t.Errorf("expected second call's Page to be unaffected by mutation of first, got %d", second.Page)
+	}
+	for _, v := range second.Omit {
+		if v == "mutated" {
+			t.Errorf("expected second call's Omit to be unaffected by mutation of first, got %v", second.Omit)
+		}
+	}
+}

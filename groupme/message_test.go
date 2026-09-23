@@ -189,3 +189,14 @@ func TestSearchRespectsLimit(t *testing.T) {
 		t.Errorf("expected %d messages, got %d", limit, len(result.Messages))
 	}
 }
+
+func TestDefaultMessageQueryReturnsIndependentCopies(t *testing.T) {
+	first := DefaultMessageQuery()
+	limit := 42
+	first.Limit = &limit
+
+	second := DefaultMessageQuery()
+	if second.Limit != nil {
+		t.Errorf("expected second call's Limit to be unaffected by mutation of first, got %v", *second.Limit)
+	}
+}

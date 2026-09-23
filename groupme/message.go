@@ -55,8 +55,20 @@ type MessageSearch struct {
 	StopCriteria func(count int, total int, seen int) bool
 }
 
-var DefaultMessageQuery MessageQuery = MessageQuery{
+var defaultMessageQuery MessageQuery = MessageQuery{
 	nil, nil, nil, nil,
+}
+
+// DefaultMessageQuery returns a fresh copy of the default MessageQuery. Each
+// call returns an independent value so callers can safely mutate the
+// returned value without affecting other callers.
+func DefaultMessageQuery() MessageQuery {
+	return MessageQuery{
+		BeforeId: defaultMessageQuery.BeforeId,
+		SinceId:  defaultMessageQuery.SinceId,
+		AfterId:  defaultMessageQuery.AfterId,
+		Limit:    defaultMessageQuery.Limit,
+	}
 }
 
 type SendMessageCommand struct {
@@ -122,7 +134,8 @@ func (api MessageAPI) Search(groupId string, search MessageSearch) (*MessageInde
 // Build the request URL used by both Query and queryForSearch.
 func (api MessageAPI) buildQueryURL(groupId string, q *MessageQuery) (string, error) {
 	if q == nil {
-		q = &DefaultMessageQuery
+		dq := DefaultMessageQuery()
+		q = &dq
 	}
 	values := url.Values{}
 	if q.BeforeId != nil {

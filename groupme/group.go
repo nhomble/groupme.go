@@ -63,15 +63,28 @@ type UpdateGroupCommand struct {
 	ImageURL   *string `json:"image_url,omitempty"`
 }
 
-var DefaultGroupQuery GroupQuery = GroupQuery{
+var defaultGroupQuery GroupQuery = GroupQuery{
 	Page:    1,
 	PerPage: 10,
 	Omit:    []string{"memberships"},
 }
 
+// DefaultGroupQuery returns a fresh copy of the default GroupQuery. Each call
+// returns an independent value, including a copy of the Omit slice, so
+// callers can safely mutate the returned value without affecting other
+// callers.
+func DefaultGroupQuery() GroupQuery {
+	return GroupQuery{
+		Page:    defaultGroupQuery.Page,
+		PerPage: defaultGroupQuery.PerPage,
+		Omit:    append([]string{}, defaultGroupQuery.Omit...),
+	}
+}
+
 func (api GroupAPI) searchInternal(endpoint string, q *GroupQuery) ([]Group, error) {
 	if q == nil {
-		q = &DefaultGroupQuery
+		dq := DefaultGroupQuery()
+		q = &dq
 	}
 	if q.PerPage < 0 || q.PerPage > 10 {
 		return nil, errors.New(fmt.Sprintf("Invalid number of groups per page=%d", q.PerPage))
