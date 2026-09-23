@@ -29,7 +29,7 @@ func TestFindMakeDeleteGroupt(t *testing.T) {
 	})
 
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	if result.Name != name {
 		t.Errorf("Expected group with name=%s but got %s", name, result.Name)
