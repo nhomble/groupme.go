@@ -93,6 +93,60 @@ func TestSearchStopsOnEmptyPage(t *testing.T) {
 	}
 }
 
+func TestQueryMessagesQueryStringWellFormed(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedRawQuery string
+	httpmock.RegisterResponder("GET", `=~^https://api\.groupme\.com/v3/groups/groupId/messages`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedRawQuery = req.URL.RawQuery
+			return httpmock.NewStringResponse(200, `{"response":{"count":0,"messages":[]}}`), nil
+		})
+
+	client, _ := NewClient(TokenProviderFromToken("test"))
+	beforeId := "abc"
+	_, err := client.Messages.Query("groupId", &MessageQuery{BeforeId: &beforeId})
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	if strings.Contains(capturedRawQuery, "?&") || strings.HasPrefix(capturedRawQuery, "&") {
+		t.Errorf("expected well-formed query string, got %q", capturedRawQuery)
+	}
+	if !strings.Contains(capturedRawQuery, "before_id=abc") {
+		t.Errorf("expected before_id=abc in query, got %q", capturedRawQuery)
+	}
+}
+
+func TestQueryMessagesEscapesGroupIdAndIds(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	var capturedPath, capturedRawQuery string
+	httpmock.RegisterResponder("GET", `=~^https://api\.groupme\.com/v3/groups/.*`,
+		func(req *http.Request) (*http.Response, error) {
+			capturedPath = req.URL.EscapedPath()
+			capturedRawQuery = req.URL.RawQuery
+			return httpmock.NewStringResponse(200, `{"response":{"count":0,"messages":[]}}`), nil
+		})
+
+	client, _ := NewClient(TokenProviderFromToken("test"))
+	beforeId := "id/with space"
+	_, err := client.Messages.Query("group/id", &MessageQuery{BeforeId: &beforeId})
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	expectedPath := "/v3/groups/group%2Fid/messages"
+	if capturedPath != expectedPath {
+		t.Errorf("expected escaped path %q, got %q", expectedPath, capturedPath)
+	}
+	if !strings.Contains(capturedRawQuery, "before_id=id%2Fwith+space") {
+		t.Errorf("expected before_id to be encoded, got %q", capturedRawQuery)
+	}
+}
+
 func TestSearchRespectsLimit(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -75,12 +76,14 @@ func (api GroupAPI) searchInternal(endpoint string, q *GroupQuery) ([]Group, err
 	if q.PerPage < 0 || q.PerPage > 10 {
 		return nil, errors.New(fmt.Sprintf("Invalid number of groups per page=%d", q.PerPage))
 	}
-	omit := ""
+	values := url.Values{}
+	values.Set("page", fmt.Sprintf("%d", q.Page))
+	values.Set("per_page", fmt.Sprintf("%d", q.PerPage))
 	if len(q.Omit) > 0 {
-		omit = "&omit=" + strings.Join(q.Omit, ",")
+		values.Set("omit", strings.Join(q.Omit, ","))
 	}
-	url := api.client.makeURL(fmt.Sprintf("/v3%s?page=%d&per_page=%d%s", endpoint, q.Page, q.PerPage, omit))
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+	reqURL := api.client.makeURL(fmt.Sprintf("/v3%s?%s", endpoint, values.Encode()))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -144,8 +147,8 @@ func (api GroupAPI) FindFormer(q *GroupQuery) ([]Group, error) {
 
 // Get group by id
 func (api GroupAPI) Get(id string) (*Group, error) {
-	url := api.client.makeURL(fmt.Sprintf("/v3/groups/%s", id))
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
+	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s", url.PathEscape(id)))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -153,12 +156,12 @@ func (api GroupAPI) Get(id string) (*Group, error) {
 }
 
 func (api GroupAPI) Create(cmd *CreateGroupCommand) (*Group, error) {
-	url := api.client.makeURL("/v3/groups")
+	reqURL := api.client.makeURL("/v3/groups")
 	data, err := json.Marshal(cmd)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
@@ -167,12 +170,12 @@ func (api GroupAPI) Create(cmd *CreateGroupCommand) (*Group, error) {
 
 // Update a group by id
 func (api GroupAPI) Update(groupId string, cmd *UpdateGroupCommand) (*Group, error) {
-	url := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/update", groupId))
+	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/update", url.PathEscape(groupId)))
 	data, err := json.Marshal(cmd)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
@@ -181,8 +184,8 @@ func (api GroupAPI) Update(groupId string, cmd *UpdateGroupCommand) (*Group, err
 
 // Delete the group by id
 func (api GroupAPI) Delete(groupId string) error {
-	url := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/destroy", groupId))
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, nil)
+	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/destroy", url.PathEscape(groupId)))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, nil)
 	if err != nil {
 		return err
 	}
@@ -191,8 +194,8 @@ func (api GroupAPI) Delete(groupId string) error {
 
 // Join a group for the first time
 func (api GroupAPI) Join(groupId string, shareUrl string) (*Group, error) {
-	url := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/join/%s", groupId, shareUrl))
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, nil)
+	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/join/%s", url.PathEscape(groupId), url.PathEscape(shareUrl)))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +204,7 @@ func (api GroupAPI) Join(groupId string, shareUrl string) (*Group, error) {
 
 // Rejoin a group this user had previously joined
 func (api GroupAPI) ReJoin(groupId string) (*Group, error) {
-	url := api.client.makeURL("/v3/groups/join")
+	reqURL := api.client.makeURL("/v3/groups/join")
 	data, err := json.Marshal(struct {
 		Id string `json:"group_id"`
 	}{
@@ -210,7 +213,7 @@ func (api GroupAPI) ReJoin(groupId string) (*Group, error) {
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}

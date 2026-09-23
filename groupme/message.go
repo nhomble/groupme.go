@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -123,28 +124,27 @@ func (api MessageAPI) buildQueryURL(groupId string, q *MessageQuery) (string, er
 	if q == nil {
 		q = &DefaultMessageQuery
 	}
-	before := ""
+	values := url.Values{}
 	if q.BeforeId != nil {
-		before = "&before_id=" + *q.BeforeId
+		values.Set("before_id", *q.BeforeId)
 	}
-	since := ""
 	if q.SinceId != nil {
-		since = "&since_id=" + *q.SinceId
+		values.Set("since_id", *q.SinceId)
 	}
-	after := ""
 	if q.AfterId != nil {
-		after = "&after_id=" + *q.AfterId
+		values.Set("after_id", *q.AfterId)
 	}
-	limit := fmt.Sprintf("&limit=%d", DefaultMessageLimit)
+	limit := DefaultMessageLimit
 	if q.Limit != nil {
 		if *q.Limit < 0 {
 			return "", errors.New(fmt.Sprintf("Provided limit=%d is less than 0!", *q.Limit))
 		} else if *q.Limit > 100 {
 			return "", errors.New(fmt.Sprintf("Provided limit=%d is greater than 100!", *q.Limit))
 		}
-		limit = fmt.Sprintf("&limit=%d", *q.Limit)
+		limit = *q.Limit
 	}
-	return api.client.makeURL(fmt.Sprintf("/v3/groups/%s/messages?%s%s%s%s", groupId, before, since, after, limit)), nil
+	values.Set("limit", fmt.Sprintf("%d", limit))
+	return api.client.makeURL(fmt.Sprintf("/v3/groups/%s/messages?%s", url.PathEscape(groupId), values.Encode())), nil
 }
 
 // Get messages in the group
@@ -200,14 +200,14 @@ func (api MessageAPI) queryForSearch(groupId string, q *MessageQuery) (*MessageI
 
 // Send a message to the group
 func (api MessageAPI) Send(groupId string, cmd *SendMessageCommand) (*Message, error) {
-	url := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/messages", groupId))
+	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/messages", url.PathEscape(groupId)))
 	data, err := json.Marshal(struct {
 		Message SendMessageCommand `json:"message"`
 	}{Message: *cmd})
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
