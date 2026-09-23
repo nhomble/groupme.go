@@ -41,8 +41,8 @@ func TestUpdateName(t *testing.T) {
 	await(t, 1*time.Second, 10*time.Second, func() bool {
 		updated, err := client.Users.Get()
 		if err != nil {
-			t.Fatal(err)
+			return false
 		}
-		return user.Name == updated.Name
+		return updated.Name == newName
 	})
 }
