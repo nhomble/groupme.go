@@ -1,7 +1,10 @@
+//go:build integration
+
 package main
 
 import (
 	"github.com/nhomble/groupme.go/groupme"
+	"os"
 	"testing"
 	"time"
 )
@@ -12,8 +15,10 @@ func TestGetUser(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected := "23807192"
-	if user.ID != expected {
+	if user.ID == "" {
+		t.Errorf("Expected non-empty User.ID")
+	}
+	if expected := os.Getenv("GROUPME_USER_ID"); expected != "" && user.ID != expected {
 		t.Errorf("User.ID | %s!=%s", expected, user.ID)
 	}
 }

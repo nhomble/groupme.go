@@ -1,9 +1,6 @@
 package groupme
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 )
@@ -35,17 +32,7 @@ type UpdateUserCommand struct {
 // Get authenticated users information from GroupMe
 func (api UserAPI) Get() (*User, error) {
 	user := User{}
-	url := api.client.makeURL("/v3/users/me")
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-	data, err := api.client.getResponse(req)
-	if err != nil {
-		return nil, err
-	}
-	err = unravel(&data, &user)
-	if err != nil {
+	if err := api.client.do(http.MethodGet, "/v3/users/me", nil, &user); err != nil {
 		return nil, err
 	}
 	return &user, nil
@@ -53,22 +40,8 @@ func (api UserAPI) Get() (*User, error) {
 
 // Update users information on GroupMe
 func (api UserAPI) Update(cmd UpdateUserCommand) (*User, error) {
-	url := api.client.makeURL("/v3/users/update")
-	data, err := json.Marshal(cmd)
-	if err != nil {
-		return nil, err
-	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewBuffer(data))
-	if err != nil {
-		return nil, err
-	}
 	user := &User{}
-	data, err = api.client.getResponse(req)
-	if err != nil {
-		return nil, err
-	}
-	err = unravel(&data, &user)
-	if err != nil {
+	if err := api.client.do(http.MethodPost, "/v3/users/update", cmd, user); err != nil {
 		return nil, err
 	}
 	return user, nil

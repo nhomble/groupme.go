@@ -1,10 +1,6 @@
 package groupme
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -112,7 +108,7 @@ func (api MessageAPI) Search(groupId string, search MessageSearch) (*MessageInde
 			break
 		}
 
-		resp, status, err := api.queryForSearch(groupId, &MessageQuery{
+		resp, err := api.queryForSearch(groupId, &MessageQuery{
 			BeforeId: lastId,
 		})
 
@@ -120,7 +116,7 @@ func (api MessageAPI) Search(groupId string, search MessageSearch) (*MessageInde
 			return nil, err
 		}
 
-		if status == http.StatusNotModified || len(resp.Messages) == 0 {
+		if len(resp.Messages) == 0 {
 			// No more messages left to paginate through.
 			break
 		}
@@ -145,7 +141,7 @@ func (api MessageAPI) Search(groupId string, search MessageSearch) (*MessageInde
 	return &MessageIndex{Count: count, Messages: ret}, nil
 }
 
-// Build the request URL used by both Query and queryForSearch.
+// Build the request path used by both Query and queryForSearch.
 func (api MessageAPI) buildQueryURL(groupId string, q *MessageQuery) (string, error) {
 	if q == nil {
 		dq := DefaultMessageQuery()
@@ -164,33 +160,24 @@ func (api MessageAPI) buildQueryURL(groupId string, q *MessageQuery) (string, er
 	limit := DefaultMessageLimit
 	if q.Limit != nil {
 		if *q.Limit < 0 {
-			return "", errors.New(fmt.Sprintf("Provided limit=%d is less than 0!", *q.Limit))
+			return "", fmt.Errorf("Provided limit=%d is less than 0!", *q.Limit)
 		} else if *q.Limit > 100 {
-			return "", errors.New(fmt.Sprintf("Provided limit=%d is greater than 100!", *q.Limit))
+			return "", fmt.Errorf("Provided limit=%d is greater than 100!", *q.Limit)
 		}
 		limit = *q.Limit
 	}
 	values.Set("limit", fmt.Sprintf("%d", limit))
-	return api.client.makeURL(fmt.Sprintf("/v3/groups/%s/messages?%s", url.PathEscape(groupId), values.Encode())), nil
+	return fmt.Sprintf("/v3/groups/%s/messages?%s", url.PathEscape(groupId), values.Encode()), nil
 }
 
 // Get messages in the group
 func (api MessageAPI) Query(groupId string, q *MessageQuery) (*MessageIndex, error) {
-	url, err := api.buildQueryURL(groupId, q)
-	if err != nil {
-		return nil, err
-	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-	data, err := api.client.getResponse(req)
+	path, err := api.buildQueryURL(groupId, q)
 	if err != nil {
 		return nil, err
 	}
 	messages := MessageIndex{}
-	err = unravel(&data, &messages)
-	if err != nil {
+	if err := api.client.do(http.MethodGet, path, nil, &messages); err != nil {
 		return nil, err
 	}
 	return &messages, nil
@@ -201,52 +188,28 @@ func (api MessageAPI) Query(groupId string, q *MessageQuery) (*MessageIndex, err
 // older messages left to paginate) as an empty, non-error result rather than
 // a hard failure, so Search can stop cleanly and return what it has
 // collected so far.
-func (api MessageAPI) queryForSearch(groupId string, q *MessageQuery) (*MessageIndex, int, error) {
-	url, err := api.buildQueryURL(groupId, q)
+func (api MessageAPI) queryForSearch(groupId string, q *MessageQuery) (*MessageIndex, error) {
+	path, err := api.buildQueryURL(groupId, q)
 	if err != nil {
-		return nil, 0, err
-	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
-	if err != nil {
-		return nil, 0, err
-	}
-	data, status, err := api.client.getResponseWithStatus(req, http.StatusNotModified)
-	if err != nil {
-		return nil, status, err
-	}
-	if status == http.StatusNotModified {
-		return &MessageIndex{}, status, nil
+		return nil, err
 	}
 	messages := MessageIndex{}
-	err = unravel(&data, &messages)
-	if err != nil {
-		return nil, status, err
+	if err := api.client.do(http.MethodGet, path, nil, &messages, http.StatusNotModified); err != nil {
+		return nil, err
 	}
-	return &messages, status, nil
+	return &messages, nil
 }
 
 // Send a message to the group
 func (api MessageAPI) Send(groupId string, cmd SendMessageCommand) (*Message, error) {
-	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/messages", url.PathEscape(groupId)))
-	data, err := json.Marshal(struct {
+	path := fmt.Sprintf("/v3/groups/%s/messages", url.PathEscape(groupId))
+	body := struct {
 		Message SendMessageCommand `json:"message"`
-	}{Message: cmd})
-	if err != nil {
-		return nil, err
-	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, bytes.NewBuffer(data))
-	if err != nil {
-		return nil, err
-	}
-	data, err = api.client.getResponse(req)
-	if err != nil {
-		return nil, err
-	}
+	}{Message: cmd}
 	result := struct {
 		Message Message `json:"message"`
 	}{}
-	err = unravel(&data, &result)
-	if err != nil {
+	if err := api.client.do(http.MethodPost, path, body, &result); err != nil {
 		return nil, err
 	}
 	return &result.Message, nil

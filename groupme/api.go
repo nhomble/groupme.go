@@ -19,16 +19,16 @@ func snippet(data *[]byte) string {
 	return s
 }
 
-func unravel(data *[]byte, dest interface{}) error {
+func unravel(data []byte, dest interface{}) error {
 	var obj map[string]*json.RawMessage
-	err := json.Unmarshal(*data, &obj)
+	err := json.Unmarshal(data, &obj)
 	if err != nil {
 		return err
 	}
 
 	raw, ok := obj["response"]
 	if !ok || raw == nil {
-		return fmt.Errorf("groupme: missing or null \"response\" field in body: %s", snippet(data))
+		return fmt.Errorf("groupme: missing or null \"response\" field in body: %s", snippet(&data))
 	}
 
 	err = json.Unmarshal(*raw, &dest)

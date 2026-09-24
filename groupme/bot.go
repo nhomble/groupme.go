@@ -1,9 +1,6 @@
 package groupme
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -66,60 +63,21 @@ type deleteBotCommand struct {
 
 // Send message from bot
 func (api BotAPI) Send(cmd BotMessageCommand) error {
-	url := api.client.makeURL("/v3/bots/post")
-	data, err := json.Marshal(cmd)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewBuffer(data))
-	if err != nil {
-		return err
-	}
-	_, err = api.client.getResponse(req)
-	if err != nil {
-		return err
-	}
-	return nil
+	return api.client.do(http.MethodPost, "/v3/bots/post", cmd, nil)
 }
 
 func (api BotAPI) Create(cmd CreateBotCommand) (*BotDefinitionForGroup, error) {
-	url := api.client.makeURL("/v3/bots")
-	envelope := createBotCommandRequest{
-		Bot: cmd,
-	}
-	data, err := json.Marshal(envelope)
-	if err != nil {
-		return nil, err
-	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewBuffer(data))
-	if err != nil {
-		return nil, err
-	}
+	envelope := createBotCommandRequest{Bot: cmd}
 	env := bot{}
-	data, err = api.client.getResponse(req)
-	if err != nil {
-		return nil, err
-	}
-	err = unravel(&data, &env)
-	if err != nil {
+	if err := api.client.do(http.MethodPost, "/v3/bots", envelope, &env); err != nil {
 		return nil, err
 	}
 	return &env.Bot, nil
 }
 
 func (api BotAPI) List() ([]BotDefinitionForGroup, error) {
-	url := api.client.makeURL("/v3/bots")
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-	data, err := api.client.getResponse(req)
-	if err != nil {
-		return nil, err
-	}
 	var bots []BotDefinitionForGroup
-	err = unravel(&data, &bots)
-	if err != nil {
+	if err := api.client.do(http.MethodGet, "/v3/bots", nil, &bots); err != nil {
 		return nil, err
 	}
 	return bots, nil
@@ -184,20 +142,5 @@ func (api BotAPI) Update(botId string, command UpdateBotCommand) (*BotDefinition
 }
 
 func (api BotAPI) Delete(botId string) error {
-	url := api.client.makeURL("/v3/bots/destroy")
-	data, err := json.Marshal(deleteBotCommand{
-		BotID: botId,
-	})
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewBuffer(data))
-	if err != nil {
-		return err
-	}
-	_, err = api.client.getResponse(req)
-	if err != nil {
-		return err
-	}
-	return nil
+	return api.client.do(http.MethodPost, "/v3/bots/destroy", deleteBotCommand{BotID: botId}, nil)
 }
