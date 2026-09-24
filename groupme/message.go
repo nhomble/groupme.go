@@ -51,6 +51,9 @@ type Message struct {
 	Attachments []Attachment `json:"attachments"`
 }
 
+// MessageIndex holds a page of messages. Count's meaning depends on how it
+// was obtained: from Query, it is the group's total message count; from
+// Search, it is instead the number of messages that matched the criteria.
 type MessageIndex struct {
 	Count    int       `json:"count"`
 	Messages []Message `json:"messages"`
