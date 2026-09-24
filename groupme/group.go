@@ -131,24 +131,27 @@ func (api GroupAPI) Find(q *GroupQuery) ([]Group, error) {
 	return api.searchInternal("/groups", q)
 }
 
+// maxFindAllPages bounds FindAll's pagination loop so a server that ignores
+// the page parameter (and keeps returning a full page) cannot spin forever.
+const maxFindAllPages = 1000
+
 func (api GroupAPI) FindAll() ([]Group, error) {
-	do := true
+	const perPage = 10
 	groups := []Group{}
-	for i := 1; do; i += 1 {
+	for i := 1; i <= maxFindAllPages; i++ {
 		q := GroupQuery{
 			Page:    i,
-			PerPage: 10,
+			PerPage: perPage,
 			Omit:    []string{"memberships"},
 		}
 		partial, err := api.Find(&q)
 		if err != nil {
 			return nil, err
 		}
-		if len(partial) == 0 {
-			do = false
-		}
-
 		groups = append(groups, partial...)
+		if len(partial) < perPage {
+			break
+		}
 	}
 	return groups, nil
 }
