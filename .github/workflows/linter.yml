@@ -23,5 +23,20 @@ jobs:
         uses: github/super-linter/slim@v4
         env:
           VALIDATE_ALL_CODEBASE: false
+          # super-linter's golangci-lint integration always runs per-file,
+          # which loses package context and misreports cross-file symbols as
+          # undeclared. Go is linted separately below with full module
+          # context instead.
+          VALIDATE_GO: false
           DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
