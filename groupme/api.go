@@ -106,34 +106,3 @@ func newAPIError(method, url string, statusCode int, data []byte) *APIError {
 	}
 	return &APIError{StatusCode: statusCode, Errors: errs, Method: method, URL: url}
 }
-
-func parseError(data *[]byte) string {
-	var obj map[string]*json.RawMessage
-	err := json.Unmarshal(*data, &obj)
-	if err != nil {
-		return err.Error()
-	}
-
-	metaRaw, ok := obj["meta"]
-	if !ok || metaRaw == nil {
-		return fmt.Sprintf("groupme: missing or null \"meta\" field in body: %s", snippet(data))
-	}
-
-	var metaObj map[string]*json.RawMessage
-	err = json.Unmarshal(*metaRaw, &metaObj)
-	if err != nil {
-		return err.Error()
-	}
-
-	errorsRaw, ok := metaObj["errors"]
-	if !ok || errorsRaw == nil {
-		return fmt.Sprintf("groupme: missing or null \"errors\" field in body: %s", snippet(data))
-	}
-
-	var errors []string
-	err = json.Unmarshal(*errorsRaw, &errors)
-	if err != nil {
-		return err.Error()
-	}
-	return strings.Join(errors, "\n")
-}

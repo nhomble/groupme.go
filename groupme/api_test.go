@@ -1,7 +1,6 @@
 package groupme
 
 import (
-	"strings"
 	"testing"
 )
 
@@ -41,45 +40,5 @@ func TestUnravelValidResponse(t *testing.T) {
 	}
 	if dest.ID != "123" || dest.Name != "test" {
 		t.Errorf("unexpected unravel result: %+v", dest)
-	}
-}
-
-func TestParseErrorMissingMeta(t *testing.T) {
-	data := []byte(`{"response":null}`)
-
-	msg := parseError(&data)
-
-	if !strings.Contains(msg, "meta") {
-		t.Errorf("expected error message to mention missing meta field, got %q", msg)
-	}
-}
-
-func TestParseErrorNullMeta(t *testing.T) {
-	data := []byte(`{"response":null,"meta":null}`)
-
-	msg := parseError(&data)
-
-	if !strings.Contains(msg, "meta") {
-		t.Errorf("expected error message to mention missing meta field, got %q", msg)
-	}
-}
-
-func TestParseErrorMissingErrors(t *testing.T) {
-	data := []byte(`{"meta":{"code":400}}`)
-
-	msg := parseError(&data)
-
-	if !strings.Contains(msg, "errors") {
-		t.Errorf("expected error message to mention missing errors field, got %q", msg)
-	}
-}
-
-func TestParseErrorValid(t *testing.T) {
-	data := []byte(`{"meta":{"code":400,"errors":["invalid token","bad request"]}}`)
-
-	msg := parseError(&data)
-
-	if msg != "invalid token\nbad request" {
-		t.Errorf("unexpected parseError result: %q", msg)
 	}
 }
