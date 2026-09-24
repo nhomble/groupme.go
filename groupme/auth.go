@@ -7,14 +7,17 @@ import (
 	"path/filepath"
 )
 
+// TokenProvider supplies the GroupMe API token used to authenticate requests.
 type TokenProvider interface {
 	Get() (string, error)
 }
 
+// SimpleTokenProvider provides a fixed, in-memory token.
 type SimpleTokenProvider struct {
 	token string
 }
 
+// EnvironmentTokenProvider provides a token read from an environment variable.
 type EnvironmentTokenProvider struct {
 	Key string // optional field that is the environment variable key
 }
@@ -40,12 +43,13 @@ func (e EnvironmentTokenProvider) Get() (string, error) {
 	return t, nil
 }
 
-// Create token provider from in memory token
+// TokenProviderFromToken creates a token provider from an in-memory token.
 func TokenProviderFromToken(t string) TokenProvider {
 	return SimpleTokenProvider{token: t}
 }
 
-// Create token provider from properties file
+// TokenProviderFromProperties creates a token provider from a properties
+// file, joining the given path segments.
 func TokenProviderFromProperties(p ...string) (TokenProvider, error) {
 	thePath := filepath.Join(p...)
 	config, err := props.View(thePath)

@@ -3,12 +3,9 @@ package main
 import (
 	"github.com/nhomble/groupme.go/groupme"
 	"log"
-	"math/rand"
-	"time"
 )
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
 	provider := groupme.EnvironmentTokenProvider{}
 	client, err := groupme.NewClient(provider)
 	must(err)

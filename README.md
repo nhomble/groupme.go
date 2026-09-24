@@ -5,7 +5,7 @@
 go sdk for groupme
 
 ## Summary
-A simple sdk for the [GroupMe API](https://dev.groupme.com/) with no dependencies outside of the stdlib.
+A simple sdk for the [GroupMe API](https://dev.groupme.com/) with no runtime/production dependencies outside of the stdlib. Tests use [httpmock](https://github.com/jarcoal/httpmock).
 
 ## Usage
 ### Import
@@ -30,10 +30,10 @@ func main() {
 ## Examples
 ### [Send Message](examples/sendMessage/main.go)
 ```sh
-go run examples/sendMessage.go
+go run examples/sendMessage/main.go
 ```
 
-You'll see here that the token is pulled from disk ```~/.groupme-go.prop``` and then we:
+You'll see here that the token is pulled from disk ```~/.groupme-api/prop.txt``` and then we:
 - create group
 - create message
 - list messages (and print our expectation)

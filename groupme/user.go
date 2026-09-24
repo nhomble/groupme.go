@@ -5,11 +5,12 @@ import (
 	"time"
 )
 
+// UserAPI is the client API responsible for all user functionality.
 type UserAPI struct {
 	client *Client
 }
 
-// GroupMe User Entity
+// User is the GroupMe user data model.
 type User struct {
 	ID          string `json:"id"`
 	PhoneNumber string `json:"phone_number"`
@@ -21,7 +22,7 @@ type User struct {
 	Sms         bool   `json:"sms"`
 }
 
-// GroupeMe Update User Payload
+// UpdateUserCommand is the request body to update the authenticated user.
 type UpdateUserCommand struct {
 	AvatarURL *string `json:"avatar_url,omitempty"`
 	Name      *string `json:"name,omitempty"`
@@ -47,12 +48,12 @@ func (api UserAPI) Update(cmd UpdateUserCommand) (*User, error) {
 	return user, nil
 }
 
-// Parse the time since epoch time from groupme
+// CreatedAtParsed parses the user's created-at epoch time.
 func (user User) CreatedAtParsed() time.Time {
 	return time.Unix(user.CreatedAt, 0)
 }
 
-// Parse the time since epoch time from groupme
+// UpdatedAtParsed parses the user's updated-at epoch time.
 func (user User) UpdatedAtParsed() time.Time {
 	return time.Unix(user.UpdatedAt, 0)
 }

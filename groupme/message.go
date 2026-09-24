@@ -7,10 +7,12 @@ import (
 	"time"
 )
 
+// MessageAPI is the client API responsible for all message functionality.
 type MessageAPI struct {
 	client *Client
 }
 
+// PreviewMessage is the preview of the most recent message in a group.
 type PreviewMessage struct {
 	Nickname string `json:"nickname"`
 	Text     string `json:"text"`
@@ -33,6 +35,7 @@ type Attachment struct {
 	Charmap     [][]int  `json:"charmap,omitempty"`
 }
 
+// Message is the GroupMe message data model.
 type Message struct {
 	ID          string       `json:"id"`
 	SourceGuid  string       `json:"source_guid"`
@@ -47,11 +50,13 @@ type Message struct {
 	Attachments []Attachment `json:"attachments"`
 }
 
+// MessageIndex is a page of messages with the total count.
 type MessageIndex struct {
 	Count    int       `json:"count"`
 	Messages []Message `json:"messages"`
 }
 
+// MessageQuery controls pagination when listing messages.
 type MessageQuery struct {
 	BeforeId *string
 	SinceId  *string
@@ -59,6 +64,7 @@ type MessageQuery struct {
 	Limit    *int
 }
 
+// MessageSearch controls how MessageAPI.Search filters and paginates results.
 type MessageSearch struct {
 	Limit        *int
 	Criteria     func(message Message) bool
@@ -81,12 +87,15 @@ func DefaultMessageQuery() MessageQuery {
 	}
 }
 
+// SendMessageCommand is the request body to send a message.
 type SendMessageCommand struct {
 	SourceGuid  string       `json:"source_guid"`
 	Text        string       `json:"text"`
 	Attachments []Attachment `json:"attachments,omitempty"`
 }
 
+// Search paginates through a group's messages, returning those matching
+// search.Criteria until search.StopCriteria or search.Limit is reached.
 func (api MessageAPI) Search(groupId string, search MessageSearch) (*MessageIndex, error) {
 	criteria := search.Criteria
 	if criteria == nil {
@@ -170,7 +179,7 @@ func (api MessageAPI) buildQueryURL(groupId string, q *MessageQuery) (string, er
 	return fmt.Sprintf("/v3/groups/%s/messages?%s", url.PathEscape(groupId), values.Encode()), nil
 }
 
-// Get messages in the group
+// Query gets messages in the group.
 func (api MessageAPI) Query(groupId string, q *MessageQuery) (*MessageIndex, error) {
 	path, err := api.buildQueryURL(groupId, q)
 	if err != nil {
@@ -215,7 +224,7 @@ func (api MessageAPI) Send(groupId string, cmd SendMessageCommand) (*Message, er
 	return &result.Message, nil
 }
 
-// Parse the time since epoch time from groupme
+// CreatedAtParsed parses the message's created-at epoch time.
 func (message Message) CreatedAtParsed() time.Time {
 	return time.Unix(message.CreatedAt, 0)
 }

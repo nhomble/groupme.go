@@ -1,3 +1,4 @@
+// Package groupme is a Go SDK for the GroupMe API (https://dev.groupme.com/).
 package groupme
 
 import (
@@ -6,6 +7,7 @@ import (
 	"strings"
 )
 
+// DefaultMessageLimit is the default number of messages returned per page.
 const DefaultMessageLimit = 20
 
 // snippet returns a truncated, human-readable representation of the raw
