@@ -19,7 +19,9 @@ const defaultHTTPTimeout = 30 * time.Second
 // exhaust memory with an oversized response.
 const maxResponseBodySize = 10 << 20 // 10 MiB
 
-// GroupMe SDK client
+// GroupMe SDK client. TokenProvider, and the SetHost/SetHTTPClient setters,
+// are not synchronized: configure the client fully before sharing it across
+// goroutines, rather than changing it while requests may be in flight.
 type Client struct {
 	httpClient    *http.Client
 	host          string
