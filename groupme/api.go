@@ -8,6 +8,16 @@ import (
 
 const DefaultMessageLimit = 20
 
+// validID rejects id values that would turn a path-segment substitution into
+// a different endpoint: empty, ".", and ".." all pass through
+// url.PathEscape unchanged but resolve to a different URL path.
+func validID(id string) error {
+	if id == "" || id == "." || id == ".." {
+		return fmt.Errorf("groupme: invalid id %q", id)
+	}
+	return nil
+}
+
 // snippet returns a truncated, human-readable representation of the raw
 // response body to help with debugging malformed API responses.
 func snippet(data *[]byte) string {
