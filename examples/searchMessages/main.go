@@ -12,7 +12,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	provider, err := groupme.TokenPoviderFromProperties(home, ".groupme-api", "prop.txt")
+	provider, err := groupme.TokenProviderFromProperties(home, ".groupme-api", "prop.txt")
 	if err != nil {
 		log.Fatal(err)
 	}

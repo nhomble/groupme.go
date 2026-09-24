@@ -9,7 +9,7 @@ import (
 type GroupmeProps map[string]string
 
 // View properties in map
-func View(propLocation string) (*GroupmeProps, error) {
+func View(propLocation string) (GroupmeProps, error) {
 	f, err := os.Open(propLocation)
 	if err != nil {
 		return nil, err
@@ -21,9 +21,32 @@ func View(propLocation string) (*GroupmeProps, error) {
 
 	props := make(GroupmeProps)
 	for scanner.Scan() {
-		text := scanner.Text()
-		parts := strings.Split(text, "=")
-		props[parts[0]] = strings.Join(parts[1:], "=")
+		text := strings.TrimSpace(scanner.Text())
+		if text == "" || strings.HasPrefix(text, "#") {
+			continue
+		}
+		parts := strings.SplitN(text, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		key := strings.TrimSpace(parts[0])
+		value := unquote(strings.TrimSpace(parts[1]))
+		props[key] = value
 	}
-	return &props, nil
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return props, nil
+}
+
+// unquote strips a single layer of surrounding matching quotes (' or ") from
+// a value, if present.
+func unquote(value string) string {
+	if len(value) >= 2 {
+		first, last := value[0], value[len(value)-1]
+		if (first == '"' && last == '"') || (first == '\'' && last == '\'') {
+			return value[1 : len(value)-1]
+		}
+	}
+	return value
 }

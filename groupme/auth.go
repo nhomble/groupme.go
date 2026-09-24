@@ -1,13 +1,14 @@
 package groupme
 
 import (
+	"errors"
 	"github.com/nhomble/groupme.go/props"
 	"os"
 	"path"
 )
 
 type TokenProvider interface {
-	Get() string
+	Get() (string, error)
 }
 
 type SimpleTokenProvider struct {
@@ -19,17 +20,24 @@ type EnvironmentTokenProvider struct {
 }
 
 // Get GroupMe API token
-func (p SimpleTokenProvider) Get() string {
-	return p.token
+func (p SimpleTokenProvider) Get() (string, error) {
+	if len(p.token) == 0 {
+		return "", errors.New("token is empty")
+	}
+	return p.token, nil
 }
 
 // Get GroupMe API token from environment
-func (e EnvironmentTokenProvider) Get() string {
+func (e EnvironmentTokenProvider) Get() (string, error) {
 	k := "GO_GROUPME_API_TOKEN"
 	if len(e.Key) > 0 {
 		k = e.Key
 	}
-	return os.Getenv(k)
+	t := os.Getenv(k)
+	if len(t) == 0 {
+		return "", errors.New("token is empty")
+	}
+	return t, nil
 }
 
 // Create token provider from in memory token
@@ -38,11 +46,11 @@ func TokenProviderFromToken(t string) TokenProvider {
 }
 
 // Create token provider from properties file
-func TokenPoviderFromProperties(p ...string) (TokenProvider, error) {
+func TokenProviderFromProperties(p ...string) (TokenProvider, error) {
 	thePath := path.Join(p...)
 	config, err := props.View(thePath)
 	if err != nil {
 		return nil, err
 	}
-	return SimpleTokenProvider{token: (*config)["token"]}, nil
+	return SimpleTokenProvider{token: config["token"]}, nil
 }

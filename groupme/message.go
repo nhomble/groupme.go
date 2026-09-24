@@ -2,10 +2,12 @@ package groupme
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -18,17 +20,31 @@ type PreviewMessage struct {
 	Text     string `json:"text"`
 }
 
+// Attachment represents a single attachment on a GroupMe message. GroupMe
+// attachments are polymorphic: the Type field determines which of the
+// remaining fields are populated (e.g. "image" uses URL, "location" uses
+// Lat/Lng/Name, "mentions" uses UserIDs/Loci, "emoji" uses Placeholder/
+// Charmap). Fields not applicable to a given Type are left zero-valued.
 type Attachment struct {
+	Type        string   `json:"type"`
+	URL         string   `json:"url,omitempty"`
+	Lat         string   `json:"lat,omitempty"`
+	Lng         string   `json:"lng,omitempty"`
+	Name        string   `json:"name,omitempty"`
+	UserIDs     []string `json:"user_ids,omitempty"`
+	Loci        [][]int  `json:"loci,omitempty"`
+	Placeholder string   `json:"placeholder,omitempty"`
+	Charmap     [][]int  `json:"charmap,omitempty"`
 }
 
 type Message struct {
-	Id          string       `json:"id"`
+	ID          string       `json:"id"`
 	SourceGuid  string       `json:"source_guid"`
 	CreatedAt   int64        `json:"created_at"`
-	UserId      string       `json:"user_id"`
-	GroupId     string       `json:"group_id"`
+	UserID      string       `json:"user_id"`
+	GroupID     string       `json:"group_id"`
 	Name        string       `json:"name"`
-	AvatarUrl   string       `json:"avatar_url"`
+	AvatarURL   string       `json:"avatar_url"`
 	Text        string       `json:"text"`
 	System      bool         `json:"system"`
 	FavoritedBy []string     `json:"favorited_by"`
@@ -53,8 +69,20 @@ type MessageSearch struct {
 	StopCriteria func(count int, total int, seen int) bool
 }
 
-var DefaultMessageQuery MessageQuery = MessageQuery{
+var defaultMessageQuery MessageQuery = MessageQuery{
 	nil, nil, nil, nil,
+}
+
+// DefaultMessageQuery returns a fresh copy of the default MessageQuery. Each
+// call returns an independent value so callers can safely mutate the
+// returned value without affecting other callers.
+func DefaultMessageQuery() MessageQuery {
+	return MessageQuery{
+		BeforeId: defaultMessageQuery.BeforeId,
+		SinceId:  defaultMessageQuery.SinceId,
+		AfterId:  defaultMessageQuery.AfterId,
+		Limit:    defaultMessageQuery.Limit,
+	}
 }
 
 type SendMessageCommand struct {
@@ -111,7 +139,7 @@ func (api MessageAPI) Search(groupId string, search MessageSearch) (*MessageInde
 			}
 			seen += 1
 		}
-		lastId = &resp.Messages[len(resp.Messages)-1].Id
+		lastId = &resp.Messages[len(resp.Messages)-1].ID
 	}
 
 	return &MessageIndex{Count: count, Messages: ret}, nil
@@ -120,30 +148,30 @@ func (api MessageAPI) Search(groupId string, search MessageSearch) (*MessageInde
 // Build the request URL used by both Query and queryForSearch.
 func (api MessageAPI) buildQueryURL(groupId string, q *MessageQuery) (string, error) {
 	if q == nil {
-		q = &DefaultMessageQuery
+		dq := DefaultMessageQuery()
+		q = &dq
 	}
-	before := ""
+	values := url.Values{}
 	if q.BeforeId != nil {
-		before = "&before_id=" + *q.BeforeId
+		values.Set("before_id", *q.BeforeId)
 	}
-	since := ""
 	if q.SinceId != nil {
-		since = "&since_id=" + *q.SinceId
+		values.Set("since_id", *q.SinceId)
 	}
-	after := ""
 	if q.AfterId != nil {
-		after = "&after_id=" + *q.AfterId
+		values.Set("after_id", *q.AfterId)
 	}
-	limit := fmt.Sprintf("&limit=%d", DefaultMessageLimit)
+	limit := DefaultMessageLimit
 	if q.Limit != nil {
 		if *q.Limit < 0 {
 			return "", errors.New(fmt.Sprintf("Provided limit=%d is less than 0!", *q.Limit))
 		} else if *q.Limit > 100 {
 			return "", errors.New(fmt.Sprintf("Provided limit=%d is greater than 100!", *q.Limit))
 		}
-		limit = fmt.Sprintf("&limit=%d", *q.Limit)
+		limit = *q.Limit
 	}
-	return api.client.makeURL(fmt.Sprintf("/v3/groups/%s/messages?%s%s%s%s", groupId, before, since, after, limit)), nil
+	values.Set("limit", fmt.Sprintf("%d", limit))
+	return api.client.makeURL(fmt.Sprintf("/v3/groups/%s/messages?%s", url.PathEscape(groupId), values.Encode())), nil
 }
 
 // Get messages in the group
@@ -152,7 +180,7 @@ func (api MessageAPI) Query(groupId string, q *MessageQuery) (*MessageIndex, err
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +206,7 @@ func (api MessageAPI) queryForSearch(groupId string, q *MessageQuery) (*MessageI
 	if err != nil {
 		return nil, 0, err
 	}
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -198,15 +226,15 @@ func (api MessageAPI) queryForSearch(groupId string, q *MessageQuery) (*MessageI
 }
 
 // Send a message to the group
-func (api MessageAPI) Send(groupId string, cmd *SendMessageCommand) (*Message, error) {
-	url := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/messages", groupId))
+func (api MessageAPI) Send(groupId string, cmd SendMessageCommand) (*Message, error) {
+	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/messages", url.PathEscape(groupId)))
 	data, err := json.Marshal(struct {
 		Message SendMessageCommand `json:"message"`
-	}{Message: *cmd})
+	}{Message: cmd})
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}

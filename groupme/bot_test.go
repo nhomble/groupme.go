@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
@@ -25,6 +26,23 @@ func TestSendMessage(t *testing.T) {
 
 	if httpmock.GetTotalCallCount() != 1 {
 		t.Errorf("Did not mock send message")
+	}
+}
+
+func TestBotMessageCommandOmitsUnsetPictureURL(t *testing.T) {
+	cmd := BotMessageCommand{
+		BotID:   "botId",
+		Message: "Hello",
+	}
+
+	data, err := json.Marshal(cmd)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	marshaled := string(data)
+
+	if strings.Contains(marshaled, `"picture_url"`) {
+		t.Errorf("expected marshaled command to omit picture_url, got %s", marshaled)
 	}
 }
 
@@ -76,13 +94,13 @@ func TestUpdatePreservesUnspecifiedFields(t *testing.T) {
 	client, _ := NewClient(TokenProviderFromToken("test"))
 	newBot, err := client.Bots.Update("old-bot", UpdateBotCommand{
 		Name:    "NewName",
-		GroupId: "group-1",
+		GroupID: "group-1",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if newBot.BotId != "new-bot" {
-		t.Errorf("expected new bot id, got %s", newBot.BotId)
+	if newBot.BotID != "new-bot" {
+		t.Errorf("expected new bot id, got %s", newBot.BotID)
 	}
 
 	if createBody.Bot.AvatarURL == nil || *createBody.Bot.AvatarURL != "http://example.com/avatar.png" {
@@ -116,7 +134,7 @@ func TestUpdateCreatesBeforeDeleting(t *testing.T) {
 	client, _ := NewClient(TokenProviderFromToken("test"))
 	_, err := client.Bots.Update("old-bot", UpdateBotCommand{
 		Name:    "NewName",
-		GroupId: "group-1",
+		GroupID: "group-1",
 	})
 
 	if err == nil {

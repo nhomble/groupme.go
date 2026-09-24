@@ -2,8 +2,8 @@ package groupme
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 )
@@ -14,9 +14,9 @@ type UserAPI struct {
 
 // GroupMe User Entity
 type User struct {
-	Id          string `json:"id"`
+	ID          string `json:"id"`
 	PhoneNumber string `json:"phone_number"`
-	ImageUrl    string `json:"image_url"`
+	ImageURL    string `json:"image_url"`
 	Name        string `json:"name"`
 	CreatedAt   int64  `json:"created_at"`
 	UpdatedAt   int64  `json:"updated_at"`
@@ -26,17 +26,17 @@ type User struct {
 
 // GroupeMe Update User Payload
 type UpdateUserCommand struct {
-	AvatarUrl *string `json:"avatar_url"`
-	Name      *string `json:"name"`
-	Email     *string `json:"email"`
-	ZipCode   *string `json:"zip_code"`
+	AvatarURL *string `json:"avatar_url,omitempty"`
+	Name      *string `json:"name,omitempty"`
+	Email     *string `json:"email,omitempty"`
+	ZipCode   *string `json:"zip_code,omitempty"`
 }
 
 // Get authenticated users information from GroupMe
 func (api UserAPI) Get() (*User, error) {
 	user := User{}
 	url := api.client.makeURL("/v3/users/me")
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -52,11 +52,13 @@ func (api UserAPI) Get() (*User, error) {
 }
 
 // Update users information on GroupMe
-func (api UserAPI) Update(cmd *UpdateUserCommand) (*User, error) {
+func (api UserAPI) Update(cmd UpdateUserCommand) (*User, error) {
 	url := api.client.makeURL("/v3/users/update")
 	data, err := json.Marshal(cmd)
-	fmt.Println(string(data))
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}

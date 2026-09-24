@@ -2,10 +2,12 @@ package groupme
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -15,30 +17,30 @@ type GroupAPI struct {
 }
 
 type Member struct {
-	UserId   string `json:"user_id"`
+	UserID   string `json:"user_id"`
 	Nickname string `json:"nickname"`
 	Muted    bool   `json:"muted"`
-	ImageUrl string `json:"image_url"`
+	ImageURL string `json:"image_url"`
 }
 
 type GroupMessages struct {
 	Count                int            `json:"count"`
-	LastMessageId        string         `json:"last_message_id"`
+	LastMessageID        string         `json:"last_message_id"`
 	LastMessageCreatedAt int64          `json:"last_message_created_at"`
 	Preview              PreviewMessage `json:"preview"`
 }
 
 type Group struct {
-	Id            string        `json:"id"`
+	ID            string        `json:"id"`
 	Name          string        `json:"name"`
 	Type          string        `json:"type"`
 	Description   string        `json:"description"`
-	ImageUrl      string        `json:"image_url"`
-	CreatorUserId string        `json:"creator_user_id"`
+	ImageURL      string        `json:"image_url"`
+	CreatorUserID string        `json:"creator_user_id"`
 	CreatedAt     int64         `json:"created_at"`
 	UpdatedAt     int64         `json:"updated_at"`
 	Members       []Member      `json:"members"`
-	ShareUrl      string        `json:"share_url"`
+	ShareURL      string        `json:"share_url"`
 	Messages      GroupMessages `json:"messages"`
 }
 
@@ -51,35 +53,50 @@ type GroupQuery struct {
 type CreateGroupCommand struct {
 	Name     string  `json:"name"`
 	Share    bool    `json:"share"`
-	ImageUrl *string `json:"image_url"`
+	ImageURL *string `json:"image_url,omitempty"`
 }
 
 type UpdateGroupCommand struct {
-	Name       *string `json:"name"`
-	Share      bool    `json:"share"`
-	OfficeMode bool    `json:"office_mode"`
-	ImageUrl   *string `json:"image_url"`
+	Name       *string `json:"name,omitempty"`
+	Share      *bool   `json:"share,omitempty"`
+	OfficeMode *bool   `json:"office_mode,omitempty"`
+	ImageURL   *string `json:"image_url,omitempty"`
 }
 
-var DefaultGroupQuery GroupQuery = GroupQuery{
+var defaultGroupQuery GroupQuery = GroupQuery{
 	Page:    1,
 	PerPage: 10,
 	Omit:    []string{"memberships"},
 }
 
+// DefaultGroupQuery returns a fresh copy of the default GroupQuery. Each call
+// returns an independent value, including a copy of the Omit slice, so
+// callers can safely mutate the returned value without affecting other
+// callers.
+func DefaultGroupQuery() GroupQuery {
+	return GroupQuery{
+		Page:    defaultGroupQuery.Page,
+		PerPage: defaultGroupQuery.PerPage,
+		Omit:    append([]string{}, defaultGroupQuery.Omit...),
+	}
+}
+
 func (api GroupAPI) searchInternal(endpoint string, q *GroupQuery) ([]Group, error) {
 	if q == nil {
-		q = &DefaultGroupQuery
+		dq := DefaultGroupQuery()
+		q = &dq
 	}
 	if q.PerPage < 0 || q.PerPage > 10 {
 		return nil, errors.New(fmt.Sprintf("Invalid number of groups per page=%d", q.PerPage))
 	}
-	omit := ""
+	values := url.Values{}
+	values.Set("page", fmt.Sprintf("%d", q.Page))
+	values.Set("per_page", fmt.Sprintf("%d", q.PerPage))
 	if len(q.Omit) > 0 {
-		omit = "&omit=" + strings.Join(q.Omit, ",")
+		values.Set("omit", strings.Join(q.Omit, ","))
 	}
-	url := api.client.makeURL(fmt.Sprintf("/v3%s?page=%d&per_page=%d%s", endpoint, q.Page, q.PerPage, omit))
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	reqURL := api.client.makeURL(fmt.Sprintf("/v3%s?%s", endpoint, values.Encode()))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -143,21 +160,21 @@ func (api GroupAPI) FindFormer(q *GroupQuery) ([]Group, error) {
 
 // Get group by id
 func (api GroupAPI) Get(id string) (*Group, error) {
-	url := api.client.makeURL(fmt.Sprintf("/v3/groups/%s", id))
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s", url.PathEscape(id)))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, err
 	}
 	return forGroup(api.client, req)
 }
 
-func (api GroupAPI) Create(cmd *CreateGroupCommand) (*Group, error) {
-	url := api.client.makeURL("/v3/groups")
+func (api GroupAPI) Create(cmd CreateGroupCommand) (*Group, error) {
+	reqURL := api.client.makeURL("/v3/groups")
 	data, err := json.Marshal(cmd)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
@@ -165,13 +182,13 @@ func (api GroupAPI) Create(cmd *CreateGroupCommand) (*Group, error) {
 }
 
 // Update a group by id
-func (api GroupAPI) Update(groupId string, cmd *UpdateGroupCommand) (*Group, error) {
-	url := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/update", groupId))
+func (api GroupAPI) Update(groupId string, cmd UpdateGroupCommand) (*Group, error) {
+	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/update", url.PathEscape(groupId)))
 	data, err := json.Marshal(cmd)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
@@ -180,8 +197,8 @@ func (api GroupAPI) Update(groupId string, cmd *UpdateGroupCommand) (*Group, err
 
 // Delete the group by id
 func (api GroupAPI) Delete(groupId string) error {
-	url := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/destroy", groupId))
-	req, err := http.NewRequest(http.MethodPost, url, nil)
+	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/destroy", url.PathEscape(groupId)))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, nil)
 	if err != nil {
 		return err
 	}
@@ -190,8 +207,8 @@ func (api GroupAPI) Delete(groupId string) error {
 
 // Join a group for the first time
 func (api GroupAPI) Join(groupId string, shareUrl string) (*Group, error) {
-	url := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/join/%s", groupId, shareUrl))
-	req, err := http.NewRequest(http.MethodPost, url, nil)
+	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/join/%s", url.PathEscape(groupId), url.PathEscape(shareUrl)))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -200,16 +217,16 @@ func (api GroupAPI) Join(groupId string, shareUrl string) (*Group, error) {
 
 // Rejoin a group this user had previously joined
 func (api GroupAPI) ReJoin(groupId string) (*Group, error) {
-	url := api.client.makeURL("/v3/groups/join")
+	reqURL := api.client.makeURL("/v3/groups/join")
 	data, err := json.Marshal(struct {
-		Id string `json:"group_id"`
+		ID string `json:"group_id"`
 	}{
-		Id: groupId,
+		ID: groupId,
 	})
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
