@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -87,7 +86,7 @@ func (api GroupAPI) searchInternal(endpoint string, q *GroupQuery) ([]Group, err
 		q = &dq
 	}
 	if q.PerPage < 0 || q.PerPage > 10 {
-		return nil, errors.New(fmt.Sprintf("Invalid number of groups per page=%d", q.PerPage))
+		return nil, fmt.Errorf("Invalid number of groups per page=%d", q.PerPage)
 	}
 	values := url.Values{}
 	values.Set("page", fmt.Sprintf("%d", q.Page))
