@@ -51,6 +51,9 @@ type Message struct {
 	Attachments []Attachment `json:"attachments"`
 }
 
+// MessageIndex holds a page of messages. Count's meaning depends on how it
+// was obtained: from Query, it is the group's total message count; from
+// Search, it is instead the number of messages that matched the criteria.
 type MessageIndex struct {
 	Count    int       `json:"count"`
 	Messages []Message `json:"messages"`
@@ -147,6 +150,9 @@ func (api MessageAPI) Search(groupId string, search MessageSearch) (*MessageInde
 
 // Build the request URL used by both Query and queryForSearch.
 func (api MessageAPI) buildQueryURL(groupId string, q *MessageQuery) (string, error) {
+	if err := validID(groupId); err != nil {
+		return "", err
+	}
 	if q == nil {
 		dq := DefaultMessageQuery()
 		q = &dq
@@ -227,6 +233,9 @@ func (api MessageAPI) queryForSearch(groupId string, q *MessageQuery) (*MessageI
 
 // Send a message to the group
 func (api MessageAPI) Send(groupId string, cmd SendMessageCommand) (*Message, error) {
+	if err := validID(groupId); err != nil {
+		return nil, err
+	}
 	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/messages", url.PathEscape(groupId)))
 	data, err := json.Marshal(struct {
 		Message SendMessageCommand `json:"message"`

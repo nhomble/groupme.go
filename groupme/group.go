@@ -131,24 +131,27 @@ func (api GroupAPI) Find(q *GroupQuery) ([]Group, error) {
 	return api.searchInternal("/groups", q)
 }
 
+// maxFindAllPages bounds FindAll's pagination loop so a server that ignores
+// the page parameter (and keeps returning a full page) cannot spin forever.
+const maxFindAllPages = 1000
+
 func (api GroupAPI) FindAll() ([]Group, error) {
-	do := true
+	const perPage = 10
 	groups := []Group{}
-	for i := 1; do; i += 1 {
+	for i := 1; i <= maxFindAllPages; i++ {
 		q := GroupQuery{
 			Page:    i,
-			PerPage: 10,
+			PerPage: perPage,
 			Omit:    []string{"memberships"},
 		}
 		partial, err := api.Find(&q)
 		if err != nil {
 			return nil, err
 		}
-		if len(partial) == 0 {
-			do = false
-		}
-
 		groups = append(groups, partial...)
+		if len(partial) < perPage {
+			break
+		}
 	}
 	return groups, nil
 }
@@ -160,6 +163,9 @@ func (api GroupAPI) FindFormer(q *GroupQuery) ([]Group, error) {
 
 // Get group by id
 func (api GroupAPI) Get(id string) (*Group, error) {
+	if err := validID(id); err != nil {
+		return nil, err
+	}
 	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s", url.PathEscape(id)))
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, reqURL, nil)
 	if err != nil {
@@ -183,6 +189,9 @@ func (api GroupAPI) Create(cmd CreateGroupCommand) (*Group, error) {
 
 // Update a group by id
 func (api GroupAPI) Update(groupId string, cmd UpdateGroupCommand) (*Group, error) {
+	if err := validID(groupId); err != nil {
+		return nil, err
+	}
 	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/update", url.PathEscape(groupId)))
 	data, err := json.Marshal(cmd)
 	if err != nil {
@@ -197,6 +206,9 @@ func (api GroupAPI) Update(groupId string, cmd UpdateGroupCommand) (*Group, erro
 
 // Delete the group by id
 func (api GroupAPI) Delete(groupId string) error {
+	if err := validID(groupId); err != nil {
+		return err
+	}
 	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/destroy", url.PathEscape(groupId)))
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, nil)
 	if err != nil {
@@ -205,9 +217,16 @@ func (api GroupAPI) Delete(groupId string) error {
 	return api.client.execute(req)
 }
 
-// Join a group for the first time
-func (api GroupAPI) Join(groupId string, shareUrl string) (*Group, error) {
-	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/join/%s", url.PathEscape(groupId), url.PathEscape(shareUrl)))
+// Join a group for the first time. shareToken is the token from the
+// group's share URL (the last path segment), not the full URL itself.
+func (api GroupAPI) Join(groupId string, shareToken string) (*Group, error) {
+	if err := validID(groupId); err != nil {
+		return nil, err
+	}
+	if err := validID(shareToken); err != nil {
+		return nil, err
+	}
+	reqURL := api.client.makeURL(fmt.Sprintf("/v3/groups/%s/join/%s", url.PathEscape(groupId), url.PathEscape(shareToken)))
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, reqURL, nil)
 	if err != nil {
 		return nil, err

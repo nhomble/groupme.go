@@ -154,11 +154,14 @@ func (api BotAPI) Update(botId string, command UpdateBotCommand) (*BotDefinition
 	if err != nil {
 		return nil, err
 	}
-	if old == nil {
-		return nil, fmt.Errorf("no bot exists for botId=%s", botId)
-	}
 
 	createCmd := CreateBotCommand(command)
+	if createCmd.Name == "" {
+		createCmd.Name = old.Name
+	}
+	if createCmd.GroupID == "" {
+		createCmd.GroupID = old.GroupID
+	}
 	if createCmd.AvatarURL == nil {
 		createCmd.AvatarURL = old.AvatarURL
 	}
@@ -175,9 +178,8 @@ func (api BotAPI) Update(botId string, command UpdateBotCommand) (*BotDefinition
 		return nil, err
 	}
 
-	err = api.Delete(botId)
-	if err != nil {
-		return nil, err
+	if err := api.Delete(botId); err != nil {
+		return newBot, fmt.Errorf("created new bot_id=%s but failed to delete old bot_id=%s: %w", newBot.BotID, botId, err)
 	}
 
 	return newBot, nil
