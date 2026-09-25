@@ -41,7 +41,7 @@ func TestGetResponse401ReturnsAPIError(t *testing.T) {
 	client, _ := NewClient(TokenProviderFromToken("test"))
 	_, err := client.Users.Get()
 
-	assertAPIError(t, err, 401, []string{"invalid token"})
+	_ = assertAPIError(t, err, 401, []string{"invalid token"})
 }
 
 func TestGetResponse404UnparseableBodyStillSetsStatusCode(t *testing.T) {
@@ -54,7 +54,7 @@ func TestGetResponse404UnparseableBodyStillSetsStatusCode(t *testing.T) {
 	client, _ := NewClient(TokenProviderFromToken("test"))
 	_, err := client.Users.Get()
 
-	assertAPIError(t, err, 404, nil)
+	_ = assertAPIError(t, err, 404, nil)
 }
 
 func TestNewClientHasBoundedTimeout(t *testing.T) {

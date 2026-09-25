@@ -18,11 +18,13 @@ func TestSendMessage(t *testing.T) {
 		httpmock.NewStringResponder(200, `{}`))
 
 	client, _ := NewClient(TokenProviderFromToken("test"))
-	client.Bots.Send(BotMessageCommand{
+	if err := client.Bots.Send(BotMessageCommand{
 		"botId",
 		"Hello",
 		nil,
-	})
+	}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	if httpmock.GetTotalCallCount() != 1 {
 		t.Errorf("Did not mock send message")
